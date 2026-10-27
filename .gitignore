@@ -1,0 +1,28 @@
+# 依赖与虚拟环境（每台机器各建一份，绝不入库）
+.venv/
+venv/
+node_modules/
+
+# 密钥：只放本地 .env，模板文件需要提交
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / TS
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log
+
+# 编辑器与系统
+.DS_Store
+.idea/
+.vscode/
+*.swp
