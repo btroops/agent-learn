@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-10-27T02:54:51.169Z",
+  "endpoint": "https://zhibo.devops.cndatacom.com/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "北京现在天气怎么样？"
+      }
+    ]
+  },
+  "http": {
+    "status": 200,
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Tue, 27 Oct 2026 02:55:10 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793069689392",
+      "req-cost-time": "1660",
+      "resp-start-time": "1793069691052",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "1652",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    },
+    "elapsedMs": 2388
+  },
+  "response": {
+    "id": "chatcmpl-30489556-a9b8-4604-b880-318b1556c2f6",
+    "object": "chat.completion",
+    "created": 1793069689,
+    "model": "DeepSeek-V4.1-Flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "抱歉，我无法实时查询天气信息。建议你打开联网搜索功能，或查看天气App/网站获取北京最新天气情况。",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "嗯，用户问北京现在的天气怎么样。这是一个需要实时信息的问题，但我没有联网，无法获取最新数据。得直接说明这个限制，避免让用户误以为我能提供实时天气。不能给具体温度或状况，那样可能不准确。可以建议用户开启联网搜索，或者用天气App、网站查。这样既诚实又提供了实用替代方案。回复要简洁清晰，先道歉说明无法查询，再给建议。"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.0.0-tp4-pp2-ep-8d310e51",
+    "usage": {
+      "prompt_tokens": 35,
+      "total_tokens": 156,
+      "completion_tokens": 121,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "created_cache_tokens": 0,
+        "multimodal_tokens": null
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 91
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

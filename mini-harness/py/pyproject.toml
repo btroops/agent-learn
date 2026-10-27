@@ -1,0 +1,13 @@
+[project]
+name = "mini-llm"
+version = "0.0.0"
+description = "手写 LLM 协议层（SSE / tool_calls 拼接），不依赖官方 SDK"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

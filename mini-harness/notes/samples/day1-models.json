@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-10-27T02:54:48.427Z",
+  "endpoint": "https://zhibo.devops.cndatacom.com/s/u/***/v1/models",
+  "http": {
+    "status": 200,
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Tue, 27 Oct 2026 02:55:07 GMT",
+      "referrer-policy": "origin",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-xss-protection": "1; mode=block"
+    }
+  },
+  "raw": "{\"object\":\"list\",\"data\":[{\"id\":\"bge-m3\",\"object\":\"model\",\"created\":1792120046,\"owned_by\":\"zhibo\"},{\"id\":\"bge-reranker\",\"object\":\"model\",\"created\":1784256186,\"owned_by\":\"zhibo\"},{\"id\":\"DeepSeek-V4.1-Flash\",\"object\":\"model\",\"created\":1773367978,\"owned_by\":\"zhibo\"},{\"id\":\"GLM-5.3-Flash\",\"object\":\"model\",\"created\":1792116676,\"owned_by\":\"zhibo\"},{\"id\":\"Qwen3-ASR-1.7B\",\"object\":\"model\",\"created\":1785208555,\"owned_by\":\"zhibo\"},{\"id\":\"Qwen3.8-27B\",\"object\":\"model\",\"created\":1766570027,\"owned_by\":\"zhibo\"},{\"id\":\"SimOCR\",\"object\":\"model\",\"created\":1785817247,\"owned_by\":\"zhibo\"},{\"id\":\"Z-Image-Turbo\",\"object\":\"model\",\"created\":1785217816,\"owned_by\":\"zhibo\"}]}"
+}

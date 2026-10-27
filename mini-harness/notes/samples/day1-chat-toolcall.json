@@ -1,0 +1,123 @@
+{
+  "capturedAt": "2026-10-27T02:54:53.011Z",
+  "endpoint": "https://zhibo.devops.cndatacom.com/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "北京现在天气怎么样？"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "查询指定城市的实时天气",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名，例如：北京"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "celsius",
+                  "fahrenheit"
+                ]
+              }
+            },
+            "required": [
+              "city"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "http": {
+    "status": 200,
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Tue, 27 Oct 2026 02:55:12 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793069692362",
+      "req-cost-time": "567",
+      "resp-start-time": "1793069692930",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "559",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    },
+    "elapsedMs": 1249
+  },
+  "response": {
+    "id": "chatcmpl-b88d7e47-6420-4996-889f-41121021d54a",
+    "object": "chat.completion",
+    "created": 1793069692,
+    "model": "DeepSeek-V4.1-Flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": [
+            {
+              "id": "chatcmpl-tool-84e66557a902b011",
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "arguments": "{\"city\": \"北京\", \"unit\": \"celsius\"}"
+              }
+            }
+          ],
+          "reasoning": "The user asks about Beijing weather. I should call get_weather."
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.0.0-tp4-pp2-ep-8d310e51",
+    "usage": {
+      "prompt_tokens": 324,
+      "total_tokens": 395,
+      "completion_tokens": 71,
+      "prompt_tokens_details": {
+        "cached_tokens": 256,
+        "created_cache_tokens": 0,
+        "multimodal_tokens": null
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 14
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}
