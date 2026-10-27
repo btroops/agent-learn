@@ -117,6 +117,7 @@ async function chat(): Promise<void> {
     body: JSON.stringify(requestBody),
   });
   const text = await res.text();
+  console.log(`\n=== text ${text} ===`)
   const elapsed = Math.round(performance.now() - startedAt);
 
   console.log(`\n=== HTTP ${res.status} ${res.statusText} (${elapsed}ms) ===`);
