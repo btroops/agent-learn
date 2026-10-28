@@ -99,7 +99,8 @@ export interface PromptTokensDetails {
   cached_tokens: number;
   /** 非标准（vLLM）：本次写入前缀缓存的 token 数，W5 做 prefix cache 时是核心指标 */
   created_cache_tokens: number;
-  multimodal_tokens: null;
+  /** 非流式响应里有这个 null 字段，流式 usage 里干脆不出现 —— 必须 optional */
+  multimodal_tokens?: null;
 }
 
 export interface CompletionTokensDetails {
@@ -139,6 +140,38 @@ export interface ChatResponse {
    * 实测存在的其余字段均为 null，不纳入类型：
    * prompt_logprobs / prompt_token_ids / prompt_text / kv_transfer_params / ec_transfer_params / metrics
    */
+}
+
+// ---------- 流式（Day 2 实测） ----------
+
+export interface StreamDelta {
+  /** 首块就带 role，且 content 为空串 —— 实测如此，不是理论情况 */
+  role?: "assistant";
+  /** 增量文本，可能是空串 */
+  content?: string;
+  /** 非标准（vLLM）：思维链与正文分开推，与 content 交错到达 */
+  reasoning?: string;
+  /** tool_calls 的增量形状 Day4 实测后补，此处不凭记忆写 */
+}
+
+export interface StreamChoice {
+  index: number;
+  delta: StreamDelta;
+  logprobs: null;
+  /** 与 delta.content 可能出现在同一个 chunk 里，实测如此 */
+  finish_reason: FinishReason | null;
+}
+
+export interface ChatCompletionChunk {
+  id: string;
+  object: "chat.completion.chunk";
+  created: number;
+  model: string;
+  /** usage-only chunk 的 choices 是空数组：任何 `choices[0].xxx` 都必须先判空 */
+  choices: StreamChoice[];
+  /** 只在 stream_options.include_usage=true 时出现，且出现在 finish_reason 之后 */
+  usage?: Usage;
+  system_fingerprint?: string;
 }
 
 // ---------- 请求 ----------
