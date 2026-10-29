@@ -338,3 +338,85 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 - [ ] Day 5：结构化输出两条路径（`response_format` / `tool_choice`）
 - [ ] W2 的 loop 要消费 `AssembleResult`：`broken` 直接转 `isError` 工具结果，且 `calls` 按源顺序落盘
+
+---
+
+## Day 5 — 2026-10-29 结构化输出两条路径
+
+**目标**：同一任务、同一 prompt 下对比 `json_schema` / `tool_choice` / 纯 prompt，拿出三列对比表与选型结论。
+
+脚本：`ts/src/structured.ts`，原始响应落 `samples/day5/day5-<场景>-run<N>.json`（11 个场景共 15 次请求）。
+
+### 1. 先承认一个自己踩的设计缺陷
+
+第一轮我让"纯 prompt 对照组"只收到 `只输出 JSON，不要解释`，**没有给字段名**。结果模型很合理地输出了中文键 `{"会议主题":...}`，schema 校验全红。
+
+这不是"纯 prompt 不行"的证据，只是"没告诉它，它当然不会猜中字段名"。同理 A5（`json_object` 只保证 JSON 语法，schema 是我在脑子里想的、根本没发给模型）。
+
+**修正**：把同一份 schema 用自然语言完整写进 prompt（`SCHEMA_TEXT`），重跑 C2 与 A5b。修正前后结论完全相反——这条写下来提醒自己：**对照组不公平，整个实验作废**。
+
+### 2. 实测结果（同一句中文任务）
+
+| 场景 | HTTP | schema 校验 | prompt/completion tokens | 关键观察 |
+|---|---|---|---|---|
+| A1 `json_schema`（嵌套 + 枚举） | 200 | 通过 | 75 / 169 | 完全符合 schema |
+| A2 `+ minimum:0` | 200 | 通过 | 75 / 266 | **没被拒**，与 OpenAI strict 行为不同 |
+| A3 `+ additionalProperties:true` | 200 | 通过 | 75 / 187 | **没被拒** |
+| A4 `required` 里去掉 `owner` | 200 | 失败（缺 owner） | 75 / 172 | **输出真的没有 owner** |
+| A5 `json_object`（无文字 schema） | 200 | 失败（中文键） | 75 / 163 | 只保证是 JSON，不保证结构 |
+| A5b `json_object` + 文字 schema | 200 | 通过 | 198 / 212 | 补齐 schema 描述后可用 |
+| B1 `tool_choice` 指定函数名 | 200 | 通过 | 451 / 295 | 参数在 `tool_calls[0].arguments` |
+| B2 `tool_choice:"required"` | 200 | 通过 | 451 / 233 | 同上 |
+| C 纯 prompt（无字段名） | 200×3 | 3/3 失败 | 75 / 209,232,242 | 中文键，设计缺陷组 |
+| C2 纯 prompt + 文字 schema | 200×3 | **3/3 通过** | 198 / 245,229,248 | 修正后的公平基线 |
+| A2b `+ minimum:100` | 200 | 通过 | 75 / 216 | **`duration_hours` 输出了 205** |
+
+### 3. 三个实质发现
+
+**① 这个网关真的在做语法级强制解码（guided decoding），而不只是"建议"。**
+
+证据有两处：
+
+- A4 把 `owner` 从 `required` 里去掉，输出**真的**少了 `owner`——schema 在驱动生成，不是事后过滤。
+- A2b 给 `duration_hours` 加 `minimum: 100`，而原文明明是"预计 2 小时"，模型输出了 **205**。它无法输出 `<100` 的合法值，于是编了一个。
+
+**这条比"支持 json_schema"重要得多**：约束不可满足时，模型不会报错，而是**静默扭曲语义**去满足语法。所以 schema 校验通过 ≠ 数据正确，业务校验不能省。
+
+**② 但它不校验 OpenAI 的 strict 模式限制。** `additionalProperties: true`、`minimum`、`required` 缺字段，三种 OpenAI 明确会拒绝的 schema，这里全部 200。换句话说：**不要拿 OpenAI 的 strict 文档来推断这个网关的行为**，它只关心能不能编译成语法。
+
+**③ schema 不计入 prompt_tokens（本网关特有）。** 同一任务：A 组 75 tokens，C2 组 198（+123 是文字 schema），B 组 451（+376 是工具定义）。
+
+也就是说 A 的 schema 走的是"带外"通道（编译成 grammar），一次复杂 schema 在 A 里是**零 prompt 成本**。这与 OpenAI 官方（会把 schema 序列化进 prompt 计费）不同，属于网关实现差异，换供应商后这个结论必须重测。
+
+### 4. 三列对比表
+
+| 维度 | A `json_schema` | B `tool_choice` | C 纯 prompt |
+|---|---|---|---|
+| 兼容性 | 本网关支持；但**不校验** strict 限制（A2/A3/A4 全 200） | 支持；指定函数名与 `"required"` 都生效 | 任何网关可用 |
+| schema 表达力 | 完整 JSON Schema 子集（嵌套/枚举/数值约束） | 同左（`parameters` 就是 JSON Schema） | 受模型理解力限制 |
+| 强制力 | **语法级**：`minimum` 与 `required` 都被强制执行 | 同左 | 无，只能事后校验 |
+| 是否 100% 合法 JSON | 是（语法层保证） | 是（语法层保证） | 实测 3/3 通过，但无任何保证 |
+| prompt token（本任务） | 75（schema 不进 prompt） | 451（工具定义 +376） | 198（文字 schema +123） |
+| 失败形态 | 约束不可满足时**静默扭曲语义**（2 小时 → 205 小时） | 同 A | 中文键 / 漏字段 / markdown 包裹 |
+| 语义错误的可发现性 | 低（校验全绿，但值是错的） | 低（同左） | 高（经常直接校验失败） |
+
+### 5. 什么时候必须用 `tool_choice` 而不用 `json_schema`
+
+1. **需要"动作"而不是"数据"。** 工具调用带 `id`、要被执行、结果要以 `role:"tool"` 回填；`json_schema` 只产出 `content`，没有调用语义，也拿不到配对键。
+2. **需要与工具注册表共用一份 schema。** W3 的工具注册中心是唯一真源，用 `tools` 定义就不会出现"schema 两处维护、慢慢漂移"。
+3. **需要在一次响应里同时给文本和调用。** `json_schema` 的输出只能是一段 JSON。
+4. **跨厂商兼容。** `json_schema` strict 的支持差异最大（本网关连校验都不做），`tool_choice` 支持面更广。
+
+反过来的场合用 `json_schema`：纯抽取、无副作用、schema 复杂（嵌套 + 数值范围 + 枚举），因为强制力最强且（本网关）不花 prompt token。
+
+### 6. 本项目的选型结论
+
+- **有副作用的动作 → 路径 B**（`tools` + `tool_choice`），工具定义是唯一真源；
+- **纯数据抽取 → 路径 A**（`json_schema`），强制力最强、token 最省；
+- **路径 C 只作降级**：网关不支持 A/B 时用文字 schema，且**必须**在客户端 `JSON.parse` + schema 校验，失败要重试或回退，不能当成功；
+- **无论走哪条，schema 校验之后还要业务校验**。A2b 已经证明：语法强制会为了满足约束而扭曲数值，`duration_hours: 205` 是"完全合法"的 JSON。
+
+### 7. 遗留
+
+- [ ] Day 6：故障样本（429 / 5xx / 断连 / 超时）
+- [ ] 换供应商（或网关升级）后重测第 3 节的三条结论，尤其是"schema 不计 prompt token"
