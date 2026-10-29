@@ -181,7 +181,8 @@ chunk 49       : choices = []，只有 usage                            ← fini
 
 **四个结论**
 
-1. **分片由缓冲区决定，不是 token 驱动。** 片大小稳定落在 15~16KB，说明中间有代理在攒包。因此首片 2932ms 是"缓冲区填满或上游生成结束"的时间，**不是真正的首 token 时间**——TTFT 在客户端根本测不出来。W8 做 trace 时这个字段只能叫 "first byte"，不能叫 TTFT。
+1. ~~分片由中间代理的缓冲区决定~~ —— **归因错误，Day 3 已推翻**：片大小是**客户端网络栈**的合并结果，不是服务端行为。同一网关、同一 prompt，Python(httpx/httpcore) 侧看到 66 片、平均 276B、**65/66 片正好以事件边界结尾**；TS(undici) 侧被合并成 2 片。说明服务端确实是逐事件 flush 的，只是 Node 侧把连续到达的事件合并成大块读。
+   连带收回一条结论：曾据此断言"TTFT 在客户端测不出来"，这是错的。两侧都能在最后约 250ms 内看到连续流（TS 2987→3233ms，Py 3466→3722ms），首片偏移可测；它包含排队与预填充，只是**不等于模型出第一个 token 的时刻**。
    另：最初用 `performance.now()` 相对 `readSSEStream` 起点计时，算出"首片 3ms"，完全是小作文级别的假象。改成 epoch 时间戳后才看出真相。
 2. **5 个分片里 4 个切在 JSON 事件中间**，其中 long 样本 #1 直接切在 `"finish_reason"` 这个键名里（`..."fini` | `sh_reason"...`）。半包不是边角情况，是**每一次**都在发生。
 3. **144 个事件全部用 `\n\n` 分隔，一个 `\r` 都没有。** 所以解析器的 CRLF 分支目前**只有单测覆盖，真实流量没验证过**——笔记里必须保持"未实测"，不能因为单测绿了就宣称网关会发 CRLF。
@@ -192,3 +193,73 @@ chunk 49       : choices = []，只有 usage                            ← fini
 - [ ] Day 3：Python 侧同构实现 + 分片边界对比（现在有了可比的 `.chunks.json`，正好逐片对齐）
 - [ ] Day 4：`delta.tool_calls` 增量形状（types.ts 的 `StreamDelta` 里故意留了空位，不凭记忆填）
 - [ ] Day 6：实测"200 + 流中 error 事件"时，当前实现会把 `chunk.error` 打印出来但不中断——这条要变成明确策略
+
+---
+
+## Day 3 — 2026-10-29 Python 侧对齐 + 双语言差异
+
+**目标**：用 `httpx` 重写同一套逻辑，重点看两侧在"分片边界"上到底同不同。
+
+### 1. 环境补充
+
+- `pytest 9.2.0` 装进仓库根 `.venv`（`uv pip install --python .venv/bin/python pytest`）
+- `pyproject.toml` 里 `pythonpath = ["src"]`，所以单测可直接 `import mini_llm`
+
+### 2. 结构（与 TS 逐一对应）
+
+| TS | Python | 说明 |
+|---|---|---|
+| `types.ts` | `types.py` | TypedDict，字段口径与 TS 完全一致；**不引入 pydantic**（那是 W3 工具参数校验的事） |
+| `sse.ts` | `sse.py` | `SSEParser` / `create_sse_parser` / `is_done_event` |
+| `stream.ts` | `stream.py` | `aiter_sse_events` / `stream_chat_completion` |
+
+命名映射：`createSSEParser ↔ create_sse_parser`、`isDoneEvent ↔ is_done_event`、`readSSEStream ↔ aiter_sse_events`、`streamChatCompletion ↔ stream_chat_completion`。
+
+### 3. 一处刻意的不照抄（取舍）
+
+计划原文是"`sse.py`：同 Day 2 的状态机，**`async def` 版本**"。我没有把解析器本身写成 async：
+
+- **放弃的方案**：`async def push(chunk) -> list[SSEEvent]`。状态机是纯计算，没有 await 点，async 只是套壳；会把单测全部变成 `await`，且与 TS 侧的同步 `push()` 不再同构（AGENTS 要求双语言行为一一对应）。
+- **采用的方案**：`SSEParser.push()` 保持同步，另加 `async def aiter_sse_events(chunks: AsyncIterator[str])` 作为异步入口。真实 IO 的异步性体现在 `aiter_text()` 上，那才是需要 await 的地方。
+
+### 4. 单测：15 条全绿，0.07s
+
+11 条 `test_sse.py`（与 TS 的 11 条逐条对应）+ 3 条 `test_stream.py`（UTF-8 边界 / `[DONE]` / 截断）+ 1 条回归（见下）。
+
+`test_stream.py` 用 `httpx.MockTransport` + 自定义 `AsyncByteStream` 构造分片，**不发网络**。UTF-8 那条刻意走 httpx 的真实解码路径——因为 Python 侧的字节解码不是我们写的代码，是 httpx 的保证，必须测出来才能写"已实测"。
+
+### 5. 真实调用
+
+69 个 chunk，`delta` 键 `{role, content, reasoning}`，`finish_reason: stop`，usage `reasoning_tokens 122 / completion_tokens 177`（69%）。
+
+### 6. 分片边界对比（本日核心，也推翻了 Day 2 的结论）
+
+同一天、同 prompt、同一网关：
+
+| 客户端 | 分片数 | 片大小 min/avg/max | 片尾=事件边界 | 首片→末片 |
+|---|---|---|---|---|
+| TS（undici） | 2 | 3128 / 9171 / 15213 B | 1/2 | 2987→3233 ms |
+| Py（httpcore） | 66 | 90 / 276 / 789 B | **65/66** | 3466→3722 ms |
+
+两侧事件总数都是 70，`\r` 都是 0。
+
+**结论：分片粒度是客户端网络栈的实现细节。**
+
+- 服务端确实是**逐事件 flush**（约 276B），httpcore 原样透传，所以 65/66 片正好以 `\n\n` 结尾；
+- undici 把连续到达的数据合并成大块读，于是 2 片、15KB，且 1/2 片切在 JSON 中间。
+
+**连带影响**：
+
+1. 半包在 TS 侧是常态，在 Py 侧几乎不出现 → **半包只能靠离线构造的 chunk 测**，只信真机验证的 Python 版会漏掉整条分支；
+2. Day 2 曾把 15~16KB 归因于"中间代理攒包"，并据此断言"TTFT 客户端测不出来"——**这条被推翻**，已在 Day 2 段落与笔记 §1.7 中改正。首片偏移可测（约 2.9~3.5s），只是它包含排队与预填充，不等于模型出首个 token 的时刻。
+
+### 7. 真机跑出来的 bug（同构靠抄是抄不出来的）
+
+首版 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DONE]` 直接丢给 `json.loads`，真实请求立刻抛 `SSE data 不是 JSON：[DONE]`。TS 侧因为在 `streamChatCompletion` 里先判了 `isDoneEvent`，所以同一个 bug 不存在。
+
+修法除了补判断，还做了可测性改造：`stream_chat_completion` 增加 `client` 参数（可注入 `httpx.AsyncClient`），于是这个 bug 能用 `MockTransport` 写成不发网络的回归测试。
+
+### 8. 遗留
+
+- [ ] Day 4：`tool_calls` 增量拼接（两侧都要；`StreamDelta` 的空位等着填）
+- [ ] W3 引入 pydantic 时，回头评估 `types.py` 的 TypedDict 是否要换（当前选择：解析场景用 TypedDict 更轻）
