@@ -263,3 +263,78 @@ chunk 49       : choices = []，只有 usage                            ← fini
 
 - [ ] Day 4：`tool_calls` 增量拼接（两侧都要；`StreamDelta` 的空位等着填）
 - [ ] W3 引入 pydantic 时，回头评估 `types.py` 的 TypedDict 是否要换（当前选择：解析场景用 TypedDict 更轻）
+
+---
+
+## Day 4 — 2026-10-29 增量 tool_calls 拼接
+
+**目标**：写对 W1 唯一会被后续所有周复用的组件。先取证据，再写代码。
+
+### 1. 先取证据：真实的增量形状
+
+命令：`node --env-file=../.env src/stream.ts --tools --raw-save=../notes/samples/day4-toolcalls-raw`
+
+21 个事件，原始流见 `samples/day4-toolcalls-raw.sse`。逐条展开：
+
+```
+ev#0        delta={role,content:""}
+ev#1..#6    delta={reasoning}                                ← 思维链先来
+ev#7..#9    delta={content}                                  ← 正文"我会同时查询这两项信息。"
+ev#10       tc.index=0  id="chatcmpl-tool-b8a9..."  type="function"  name="get_weather"  arguments=【不存在】
+ev#11       tc.index=0  function={arguments:"{\"city\": \""}
+ev#12       tc.index=0  function={arguments:"北京"}
+ev#13       tc.index=0  function={arguments:"\"}"}
+ev#14       tc.index=1  id="chatcmpl-tool-b574..."  type="function"  name="get_time"      arguments=【不存在】
+ev#15..#17  tc.index=1  function={arguments} 分三段
+ev#18       delta={}  finish_reason="tool_calls"             ← 空 delta 携带结束标志
+ev#19       choices=[]  只有 usage
+ev#20       [DONE]
+```
+
+**四处与"课本描述"的实质差异：**
+
+1. **首块没有 `arguments` 字段，不是空串。** 类型里若写 `arguments: string`，这里会拿到 `undefined`，拼接时直接变成字符串 `"undefined"`。
+2. **后续分片里 `function` 对象只剩 `arguments`**，`id` / `type` / `name` 全缺席——用 id 分桶会从第 2 片起全部丢失。
+3. **结束标志与数据共用 `delta` 对象**：`finish_reason` 与 `delta: {}` 同时出现，`delta` 里什么也没有。
+4. **`usage` chunk 在 `finish_reason` 之后才到**，且 `choices: []`。这条是"流会活过 finish_reason"的直接证据（见第 5 节）。
+
+### 2. 设计
+
+| 决策 | 选择 | 理由 |
+|---|---|---|
+| 分桶 key | `index` | id 只在首块出现 |
+| 何时 parse | 只在 `finish()` | 片段中途 parse 必炸 |
+| 解析失败 | 进 `broken[]`，不抛 | W2/W3 要把失败转成 isError 工具结果，而不是中断整轮 |
+| 输出顺序 | 按 index 升序 | 即源顺序；并行执行时 toolResult 也按这个顺序落盘（W2） |
+| 过早封口 | `sealed` 标志，之后再 push 抛错 | 把"在 finish_reason 处封口"这个静默 bug 变成显式崩溃 |
+| 缺 id / 缺 name | 进 `broken[]` 并给出原因 | 缺 id 无法与 tool 结果配对 |
+
+### 3. 单测：TS 10 条 + Python 10 条
+
+覆盖：单工具 5 片、双工具（照抄真实样本）、交错到达、空串片与缺字段片、第二个工具首块无 id、半截 JSON、封口后 push、无参数工具得 `{}`、源顺序输出、缺 index 快速失败。
+
+### 4. 真实接口验证（两侧各跑一次）
+
+```
+TS : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city":"北京","unit":"celsius"}
+     #1 get_time({"city": "上海"})                        -> {"city":"上海"}
+Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京", "unit": "celsius"}
+     #1 get_time({"city": "上海"})                        -> {"city": "上海"}
+```
+
+两个 `arguments` 都能 `JSON.parse` 成功，Day 4 的核心验收达成。
+
+### 5. 为什么 `finish_reason` 到达时不能认为参数已完整
+
+1. **规范其实有承诺，但只承诺"生成"。** `finish_reason` 非空即表示该 choice 生成结束，其后不应再有该 choice 的 `delta`；但承诺的对象是服务端生成，不是"我们本地已收全"，而本网关是 vLLM，是否严格遵守不可验证。
+2. **观测只能证明"流没结束"。** `usage` chunk（`choices: []`）在 `finish_reason` 之后到达，说明 `finish_reason` 不是流结束标志；但它不携带任何 delta，证明不了"之后还可能有 tool_calls 片段"。
+3. **代价不对称（决策论，不是存在性证据）。** 后补片段存在与否无法排除：早封口的代价是参数残缺，甚至"合法但错误"的前缀（`{"city":"北"}` 恰好闭合）让工具用错误参数执行；晚封口只多等一个 `[DONE]`。
+
+判定完整用**防御性**写法：**流已结束（`[DONE]` 或连接正常关闭）+ JSON 解析成功**。若网关严格守规范，`finish_reason` + 解析成功也够，但那个前提无法验证。
+
+> 更正记录：本节初稿写成"协议没保证""usage chunk 证明之后可能还有 tool_calls 片段"。前者说反了，后者是 `非 sequitur`（usage chunk 的 `choices` 恒为空数组）。完整版见 `streaming-notes.md` §2.3。
+
+### 6. 遗留
+
+- [ ] Day 5：结构化输出两条路径（`response_format` / `tool_choice`）
+- [ ] W2 的 loop 要消费 `AssembleResult`：`broken` 直接转 `isError` 工具结果，且 `calls` 按源顺序落盘

@@ -308,14 +308,21 @@ type ChatCompletionTool = ChatCompletionFunctionTool | ChatCompletionCustomTool;
   finish_reason: "stop"
 ```
 
-**四条硬约束：**
+**三条硬约束：**
 
 1. **`assistant` 那条必须原样回传**，包括 `tool_calls` 里的 `id`、`name`、`arguments` 字符串。你可以不传 `reasoning`，但不能只传 `content`。
 2. **每条 `tool_calls[i]` 必须有且只有一条对应的 `role:"tool"` 消息**，靠 `tool_call_id` 配对。少一条、多一条、id 对不上，历史就是非法的。
 3. **不能只回 tool 消息、不回 assistant 消息。** 否则模型看到的是一条"凭空出现的工具结果"，无法理解上下文。
-4. **并行调用时，tool 消息应按 `tool_calls` 的源顺序排列**【规范】。本网关是否容忍乱序**【待验证】**——但别赌，按源顺序排是零成本的好习惯。
 
-第 4 条在 W2 会变成一个具体的设计问题：**并行执行下，`toolResult` 要按源顺序写入历史，而不是按完成顺序。** 否则同一批调用的历史顺序每次不一样，prefix cache 命中率会抖。
+**另有一条工程建议，不是协议要求：并行调用时，`tool` 消息按 `tool_calls` 的源顺序排列。**
+
+配对依据是第 2 条的 `tool_call_id`，不是数组位置——**公开文档里没有任何关于顺序的条款**，所以把 A、B 两条 tool 消息调换，协议上依然成立。仍建议按源顺序排，理由不在正确性：
+
+- 兼容按位置回填的实现（`zip(tool_calls, results)` 这类写法很常见，顺序一乱就配错）；
+- 让历史确定可复现：并行执行后若按"完成顺序"写，同一批调用的消息序每次不同，prefix cache 命中率会抖，日志也没法逐次比对；
+- 代价为零。
+
+本网关是否容忍乱序仍**【待验证】**——但按源顺序排不需要先验证它。这条在 W2 会变成一个具体的设计问题：**并行执行下，`toolResult` 按源顺序写入历史，而不是按完成顺序。**
 
 ### 3.5 `finish_reason` 的取值，语义完全不同
 
@@ -566,12 +573,14 @@ chunk: [{index:0, args:"..."}, {index:1, args:"..."}]
 
 ### 5.4 完整性判定：整套协议里最容易写错的一条
 
-**【规范】** `finish_reason` 到达**不代表参数收完了**。两个原因：
+**【规范】** `finish_reason` 非空表示该 choice 生成结束，**其后不应再有该 choice 的 `delta`**——所以"参数会在 finish 之前发完"是有规范承诺的，别反过来讲成"规范没保证"。
 
-1. 某些网关会在 `finish_reason` 之后再补发 **usage-only chunk**（`choices: []`），此时流还没结束
-2. 某些实现把**最后一段 `arguments` 放在 finish 之后的 chunk 里**
+但那是**对生成的承诺**，不是**对你本地已收全的承诺**，两件事必须拆开：
 
-所以**唯一合法的完整性判据**是：
+1. **`finish_reason` ≠ 流结束标志。** 【官方】usage-only chunk 在 `data: [DONE]` 之前到达，且 `choices` **恒为空数组**（见 §5.5），【实测】已在本网关观察到。结论：在 finish 处断连会丢 usage。
+2. **它是否可能带 `tool_calls` 片段，本仓库没有证据。** 初版曾用"usage chunk 在 finish 之后到达"推出"之后还可能有 tool_calls 片段"，这是把"事件"当成不加区分的整体：usage chunk 的 `choices` 是空数组、不携带任何 delta，推不出该结论。没有观测到任何 late delta，也没有找到写"某些实现会这么做"的可靠来源。
+
+所以完整性判据应写成**防御性选择**，而非"唯一合法"：
 
 ```
 流已结束（收到 [DONE] 或连接正常关闭）
@@ -579,12 +588,18 @@ chunk: [{index:0, args:"..."}, {index:1, args:"..."}]
 累积的 arguments 字符串 JSON.parse 成功
 ```
 
+理由不是"已证明会有晚到片段"，而是三条：
+
+- 无法验证每个网关都严格遵守"finish 后无 delta"；
+- 早封口的错误代价高且静默（前缀 `{"city":"北"}` 本身就是合法 JSON，parse 不报错）；
+- 晚封口只多等一个 `[DONE]`。
+
 只满足第一个条件 → 参数可能被截断（`length`）。
 只满足第二个条件 → 流可能还没完，parse 的只是前半段（而前半段有时恰好是合法 JSON，这就是最阴险的情况）。
 
-这就补上了 3.5 留下的话题：`finish_reason === "tool_calls"` 只说明"模型停止生成、把控制权交给你"，不说明"参数完整"。两者是独立的。
+这就补上了 3.5 留下的话题：`finish_reason === "tool_calls"` 只说明"模型停止生成、把控制权交给你"，与"参数完整"是两件事。
 
-**【待验证】** 本网关是否真的会在 finish 之后补发 chunk、是否发送 usage-only chunk。Day 4 第 1 件事就是把原始 chunk 全部打出来看。
+**【待验证】** 本网关是否会在 finish 之后补发**带 delta 的** chunk（usage-only chunk 已实测存在）。这一项决定"多等到 `[DONE]`"是纯保险还是必需。
 
 ### 5.5 流式下的 `usage`
 
