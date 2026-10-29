@@ -1,6 +1,6 @@
 {
   "capturedAt": "2026-10-29T07:27:08.724Z",
-  "endpoint": "https://zhibo.devops.cndatacom.com/s/u/***/v1/chat/completions",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
   "model": "DeepSeek-V4.1-Flash",
   "includeUsage": true,
   "requestBody": {
