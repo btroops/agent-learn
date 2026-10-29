@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-29T09:09:17.538Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ]
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-a2485b9a-ab04-4337-a8a4-10437552302c\",\"object\":\"chat.completion\",\"created\":1793264952,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户中文。任务：把句子转 JSON，只输出 JSON 不要解释/markdown。需要决定字段结构。句子：明天上午十点在杭州西湖区开产品评审会，预计2小时，负责人张三，优先级高。需要 JSON 合理。只输出 JSON。需要包含时间日期？\\\"明天上午十点\\\" 是相对时间，不能直接确定日期除非保留原文。应该输出结构化字段：会议主题/事件、时间、地点、预计时长、负责人、优先级。JSON 合法。不要 markdown。只输出 JSON。需要确保中文。可以：{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}。只输出这个。注意不要代码块。最终只 JSON。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":284,\"completion_tokens\":209,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":172}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

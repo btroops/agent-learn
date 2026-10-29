@@ -1,0 +1,73 @@
+{
+  "capturedAt": "2026-10-29T09:07:29.946Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "event",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "district": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "district"
+              ],
+              "additionalProperties": false
+            },
+            "start_time": {
+              "type": "string"
+            },
+            "duration_hours": {
+              "type": "number"
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "location",
+            "start_time",
+            "duration_hours",
+            "priority"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-dddd3575-e896-4f66-b439-fffd53c64068\",\"object\":\"chat.completion\",\"created\":1793264837,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":2,\\\"priority\\\":\\\"high\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答中文。用户要求把句子转JSON，只输出 JSON 不要解释不要 markdown。需要构造合理 JSON。字段可以自定？需要包括时间、地点、会议、时长、负责人、优先级。确保合法 JSON。只输出 JSON 对象。不要代码块。考虑日期“明天上午十点”相对时间无法确定具体日期，保留原表达或结构化。只输出JSON。需要避免markdown。输出类似 {\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}。合法JSON。只输出。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":247,\"completion_tokens\":172,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":133}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

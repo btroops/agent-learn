@@ -1,0 +1,77 @@
+{
+  "capturedAt": "2026-10-29T09:09:12.681Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event",
+          "description": "把会议信息转成结构化事件对象",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": "required"
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-71a7a8e8-98c1-4ba5-9982-e3df63813177\",\"object\":\"chat.completion\",\"created\":1793264931,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-9f351b552d53853d\",\"type\":\"function\",\"function\":{\"name\":\"emit_event\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"location\\\": {\\\"city\\\": \\\"杭州\\\", \\\"district\\\": \\\"西湖区\\\"}, \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"duration_hours\\\": 2, \\\"priority\\\": \\\"high\\\", \\\"owner\\\": \\\"张三\\\"}\"}}],\"reasoning\":\"The user wants me to convert this sentence into a structured event object using the emit_event tool.\\n\\nInformation:\\n- Title: 产品评审会\\n- Location: 杭州 西湖区\\n- Start time: 明天上午十点 → \\\"明天 10:00\\\" - the schema requires a string, so I'll write \\\"明天 10:00\\\" or similar\\n- Duration: 2 hours\\n- Priority: high\\n- Owner: 张三\"},\"logprobs\":null,\"finish_reason\":\"tool_calls\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":451,\"total_tokens\":684,\"completion_tokens\":233,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":93}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

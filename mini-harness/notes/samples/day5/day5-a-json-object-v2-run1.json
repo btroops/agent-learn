@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-10-29T09:10:35.943Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\nJSON 必须严格符合以下结构：\n{\n  \"title\": string,                         // 会议主题\n  \"location\": { \"city\": string, \"district\": string },   // 嵌套对象，两个字段都必填\n  \"start_time\": string,                    // 开始时间\n  \"duration_hours\": number,                // 时长，小时\n  \"priority\": \"low\" | \"medium\" | \"high\",   // 只能是这三个值之一\n  \"owner\": string                          // 负责人\n}\n所有字段必填，不允许出现上面未列出的字段。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-dac5ffbe-6498-4eaf-801f-2f0aa5dbced7\",\"object\":\"chat.completion\",\"created\":1793265021,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":2,\\\"priority\\\":\\\"high\\\",\\\"owner\\\":\\\"张三\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答中文。需要将句子转JSON严格结构。只输出JSON不要解释不要markdown。需要确定字段值。句子：明天上午十点在杭州西湖区开产品评审会，预计2小时，负责人张三，优先级高。\\ntitle: 产品评审会? 会议主题 maybe \\\"产品评审会\\\". location city \\\"杭州\\\" district \\\"西湖区\\\". start_time: \\\"明天上午十点\\\" maybe string exactly? 需要开始时间 string。可以保留原文 \\\"明天上午十点\\\" 或转换？ JSON必须结构。没有指定格式，最好用原文。duration_hours: 2 number. priority: \\\"high\\\". owner: \\\"张三\\\". 只输出JSON。注意所有字段必填不允许未列出。确保合法JSON双引号。不要markdown代码块。最终只JSON。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":198,\"total_tokens\":410,\"completion_tokens\":212,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":169}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

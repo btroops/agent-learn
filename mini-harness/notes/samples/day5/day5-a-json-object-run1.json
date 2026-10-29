@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-10-29T09:08:23.129Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-6a918323-8ff3-4cb7-bb2f-13958346220e\",\"object\":\"chat.completion\",\"created\":1793264850,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答中文。任务：把句子转成 JSON，只输出 JSON，不要解释不要 markdown。需要构造合理 JSON。句子：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。需要提取字段。可能 JSON 对象：{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}。只输出 JSON。注意不要 markdown。可以用中文键。需要确保合法 JSON。输出只有 JSON。无代码块。最终。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":238,\"completion_tokens\":163,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":126}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

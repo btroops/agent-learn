@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-29T09:09:25.672Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ]
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-8b528e7c-a184-4d94-9343-d115b92089ee\",\"object\":\"chat.completion\",\"created\":1793264957,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户中文要求：把这句话转成 JSON，只输出 JSON，不要解释不要 markdown 代码块。需要构造 JSON。需要决定字段。原句：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。 转 JSON 包含 时间、地点、会议主题、时长、负责人、优先级。需要只输出 JSON 对象。注意“明天上午十点”是相对时间，JSON 可保留字符串。时长“2 小时”可以 \\\"2小时\\\" 或 2 单位。优先级高。地点杭州西湖区。负责人张三。会议名称产品评审会。只输出 JSON，不要 markdown。确保合法 JSON，中文没问题。可以输出 {\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}。只输出这个。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":307,\"completion_tokens\":232,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":195}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}
