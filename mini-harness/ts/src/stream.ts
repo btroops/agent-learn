@@ -12,10 +12,42 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createSSEParser, isDoneEvent, type SSEEvent } from "./sse.ts";
-import type { ChatCompletionChunk } from "./types.ts";
+import { ToolCallAccumulator } from "./tool-accum.ts";
+import type { ChatCompletionChunk, ToolDefinition } from "./types.ts";
 
 /** 单块 JSON 形状见 types.ts 的 ChatCompletionChunk（Day 2 实测） */
 export type StreamChunk = ChatCompletionChunk;
+
+/** Day4 演示用：两个工具，用来逼模型产生并行的多次工具调用 */
+const DEMO_TOOLS: ToolDefinition[] = [
+  {
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "查询指定城市的实时天气",
+      parameters: {
+        type: "object",
+        properties: {
+          city: { type: "string", description: "城市名" },
+          unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+        },
+        required: ["city"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_time",
+      description: "查询指定城市的当前时间",
+      parameters: {
+        type: "object",
+        properties: { city: { type: "string", description: "城市名" } },
+        required: ["city"],
+      },
+    },
+  },
+];
 
 /**
  * 一次 reader.read() 拿到的原始分片。
@@ -145,13 +177,15 @@ async function main(): Promise<void> {
   const includeUsage = args.includes("--usage");
   const saveTarget = args.find((a) => a.startsWith("--save="))?.slice("--save=".length);
   const rawSaveTarget = args.find((a) => a.startsWith("--raw-save="))?.slice("--raw-save=".length);
-  const prompt =
-    args.find((a) => a.startsWith("--prompt="))?.slice("--prompt=".length) ??
-    "用两句话说明什么是 SSE，并带一个 emoji。";
+  const withTools = args.includes("--tools");
+  const prompt = withTools
+    ? "请同时获取北京现在的天气，以及上海当前的时间。两个都要查。"
+    : (args.find((a) => a.startsWith("--prompt="))?.slice("--prompt=".length) ??
+      "用两句话说明什么是 SSE，并带一个 emoji。");
   const captured: ChatCompletionChunk[] = [];
   const rawChunks: RawChunk[] = [];
 
-  console.log(`模型 ${model} / usage chunk: ${includeUsage}`);
+  console.log(`模型 ${model} / usage chunk: ${includeUsage} / tools: ${withTools}`);
   console.log(`prompt: ${prompt}`);
 
   const requestStartedAtEpochMs = Date.now();
@@ -161,10 +195,13 @@ async function main(): Promise<void> {
   const deltaKeys = new Set<string>();
   const finishReasons: string[] = [];
   let usage: unknown = null;
+  const acc = new ToolCallAccumulator();
 
-  const stream = streamChatCompletion(
-    { model, messages: [{ role: "user", content: prompt }] },
-    {
+  const requestBody = withTools
+    ? { model, messages: [{ role: "user", content: prompt }], tools: DEMO_TOOLS }
+    : { model, messages: [{ role: "user", content: prompt }] };
+
+  const stream = streamChatCompletion(requestBody, {
       apiKey,
       baseUrl,
       includeUsage,
@@ -193,6 +230,8 @@ async function main(): Promise<void> {
       for (const key of Object.keys(choice.delta)) deltaKeys.add(key);
       const content = choice.delta.content;
       if (content) process.stdout.write(content);
+      // 只累积，不解析：json.parse 必须等流结束
+      acc.push(choice.delta.tool_calls);
     }
     if (choice?.finish_reason) {
       finishReasons.push(choice.finish_reason);
@@ -201,6 +240,19 @@ async function main(): Promise<void> {
     if (chunk.usage) {
       usage = chunk.usage;
       console.log(`\n[usage chunk 原样] ${JSON.stringify(chunk)}`);
+    }
+  }
+
+  // 封口时机：能走到这里说明 for await 已结束，即收到 [DONE] 或连接正常关闭之后。
+  // 绝不能在 finish_reason 到达时封口 —— 网关可能在它之后再补参数片段。
+  if (acc.size > 0) {
+    const { calls, broken } = acc.finish();
+    console.log("\n=== tool_calls 拼装结果 ===");
+    for (const call of calls) {
+      console.log(`#${call.index} ${call.name}(${call.argumentsText}) -> ${JSON.stringify(call.arguments)}`);
+    }
+    for (const bad of broken) {
+      console.log(`#${bad.index} 不可执行：${bad.reason}｜原文=${JSON.stringify(bad.argumentsText)}`);
     }
   }
 

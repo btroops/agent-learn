@@ -85,13 +85,34 @@ class ChatResponse(TypedDict):
     service_tier: None
 
 
+class ToolCallFunctionDelta(TypedDict, total=False):
+    name: str
+    # 片段，可能缺失或为空串；拼接完成前绝不能 json.loads
+    arguments: str
+
+
+class ToolCallDelta(TypedDict):
+    """流式 tool_calls 的一个分片（Day 4 实测形状）。
+
+    首块: {index:0, id:"chatcmpl-tool-...", type:"function", function:{name:"get_weather"}}
+    后续: {index:0, function:{arguments:"{\\"city\\": \\""}}
+    除 index 外全部 optional，且必须用 index 分桶。
+    """
+
+    index: int
+    id: NotRequired[str]
+    type: NotRequired[Literal["function"]]
+    function: NotRequired[ToolCallFunctionDelta]
+
+
 class StreamDelta(TypedDict, total=False):
     # 首块就带 role，且 content 为空串
     role: Literal["assistant"]
     content: str
     # 非标准（vLLM）：思维链与正文分开推
     reasoning: str
-    # tool_calls 的增量形状 Day4 实测后补，此处不凭记忆写
+    # 多工具并行时片段可能交错到达，见 tool_accum.py
+    tool_calls: list[ToolCallDelta]
 
 
 class StreamChoice(TypedDict):

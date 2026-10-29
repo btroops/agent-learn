@@ -23,6 +23,38 @@ from typing import Any, AsyncIterator, Callable
 import httpx
 
 from .sse import SSEParser, SSEEvent, is_done_event
+from .tool_accum import ToolCallAccumulator
+
+#: Day4 演示用：两个工具，用来逼模型产生并行的多次工具调用
+DEMO_TOOLS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "查询指定城市的实时天气",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string", "description": "城市名"},
+                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                },
+                "required": ["city"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_time",
+            "description": "查询指定城市的当前时间",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string", "description": "城市名"}},
+                "required": ["city"],
+            },
+        },
+    },
+]
 
 
 class SSEStreamTruncated(RuntimeError):
@@ -158,11 +190,16 @@ async def _main() -> None:
 
     args = sys.argv[1:]
     include_usage = "--usage" in args
-    prompt = _arg(args, "--prompt=") or "用两句话说明什么是 SSE，并带一个 emoji。"
+    with_tools = "--tools" in args
+    prompt = (
+        "请同时获取北京现在的天气，以及上海当前的时间。两个都要查。"
+        if with_tools
+        else (_arg(args, "--prompt=") or "用两句话说明什么是 SSE，并带一个 emoji。")
+    )
     save_target = _arg(args, "--save=")
     raw_save_target = _arg(args, "--raw-save=")
 
-    print(f"模型 {model} / usage chunk: {include_usage}")
+    print(f"模型 {model} / usage chunk: {include_usage} / tools: {with_tools}")
     print(f"prompt: {prompt}")
 
     started = time.monotonic()
@@ -172,11 +209,16 @@ async def _main() -> None:
     finish_reasons: list[str] = []
     usage: dict[str, Any] | None = None
     first = True
+    acc = ToolCallAccumulator()
 
     request_started_epoch_ms = int(time.time() * 1000)
 
+    request_body: dict[str, Any] = {"model": model, "messages": [{"role": "user", "content": prompt}]}
+    if with_tools:
+        request_body["tools"] = DEMO_TOOLS
+
     async for chunk in stream_chat_completion(
-        {"model": model, "messages": [{"role": "user", "content": prompt}]},
+        request_body,
         base_url=base_url,
         api_key=api_key,
         include_usage=include_usage,
@@ -200,12 +242,24 @@ async def _main() -> None:
             content = delta.get("content")
             if content:
                 print(content, end="", flush=True)
+            # 只累积，不解析：json.loads 必须等流结束
+            acc.push(delta.get("tool_calls"))
             if choice.get("finish_reason"):
                 finish_reasons.append(choice["finish_reason"])
                 print(f"\n[finish_reason chunk 原样] {json.dumps(chunk, ensure_ascii=False)}")
         if chunk.get("usage"):
             usage = chunk["usage"]
             print(f"\n[usage chunk 原样] {json.dumps(chunk, ensure_ascii=False)}")
+
+    # 封口时机：循环已结束，即收到 [DONE] 或连接正常关闭之后。
+    # 绝不能在 finish_reason 到达时封口 —— 网关可能在它之后再补参数片段。
+    if acc.size > 0:
+        result = acc.finish()
+        print("\n=== tool_calls 拼装结果 ===")
+        for call in result.calls:
+            print(f"#{call.index} {call.name}({call.arguments_text}) -> {json.dumps(call.arguments, ensure_ascii=False)}")
+        for bad in result.broken:
+            print(f"#{bad.index} 不可执行：{bad.reason}｜原文={bad.arguments_text!r}")
 
     elapsed_ms = int((time.monotonic() - started) * 1000)
     print("\n\n=== 汇总 ===")

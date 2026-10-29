@@ -144,6 +144,26 @@ export interface ChatResponse {
 
 // ---------- 流式（Day 2 实测） ----------
 
+/**
+ * 流式 tool_calls 的一个分片（Day 4 实测形状）。
+ *
+ * 实测证据（samples/day4-toolcalls-raw.sse）：
+ *   首块: { index:0, id:"chatcmpl-tool-...", type:"function", function:{ name:"get_weather" } }  ← 没有 arguments 字段
+ *   后续: { index:0, function:{ arguments:"{\"city\": \"" } }                                     ← 只有 index + arguments
+ *
+ * 所以除 index 外全部 optional，且用 index 分桶（id 只在首块出现，用它做 key 会丢掉后续全部片段）。
+ */
+export interface ToolCallDelta {
+  index: number;
+  id?: string;
+  type?: "function";
+  function?: {
+    name?: string;
+    /** 片段，可能为空串；拼接完成前绝不能 JSON.parse */
+    arguments?: string;
+  };
+}
+
 export interface StreamDelta {
   /** 首块就带 role，且 content 为空串 —— 实测如此，不是理论情况 */
   role?: "assistant";
@@ -151,7 +171,8 @@ export interface StreamDelta {
   content?: string;
   /** 非标准（vLLM）：思维链与正文分开推，与 content 交错到达 */
   reasoning?: string;
-  /** tool_calls 的增量形状 Day4 实测后补，此处不凭记忆写 */
+  /** 多工具并行时片段可能交错到达，见 tool-accum.ts */
+  tool_calls?: ToolCallDelta[];
 }
 
 export interface StreamChoice {
