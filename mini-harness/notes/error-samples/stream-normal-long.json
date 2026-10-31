@@ -1,0 +1,73 @@
+{
+  "scenario": "stream-normal-long",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T12:59:41.081Z",
+  "layer": "none",
+  "hypothesis": "对照组：不 abort 时应完整收到 [DONE]，否则说明该网关本来就会中途断流",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json",
+      "accept": "text/event-stream"
+    },
+    "body": {
+      "model": "DeepSeek-V4.1-Flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "写 400 字说明 HTTP/2 多路复用。"
+        }
+      ],
+      "max_tokens": 900
+    }
+  },
+  "http": {
+    "status": 200,
+    "statusText": "OK",
+    "contentType": "text/event-stream;charset=utf-8",
+    "rateLimitHeaders": {},
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "text/event-stream;charset=utf-8",
+      "date": "Sat, 31 Oct 2026 12:59:29 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793451569498",
+      "req-cost-time": "27",
+      "resp-start-time": "1793451569525",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "20",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:59:29.071Z",
+    "responseHeadersMs": 3057,
+    "firstBodyByteMs": 3057,
+    "lastEventMs": 12010,
+    "totalMs": 12010,
+    "abortedAtMs": null
+  },
+  "stream": {
+    "eventCount": 361,
+    "chunkCount": 360,
+    "bytesReceived": 93506,
+    "endedWithDone": true,
+    "errorEvent": null,
+    "firstEventData": "{\"id\":\"chatcmpl-3ed6a74a-47f7-4a04-992a-3acfe79c5993\",\"object\":\"chat.completion.chunk\",\"created\":1793451569,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"prompt_token_ids\":null,\"prompt_text\":null}",
+    "lastEventData": "[DONE]"
+  },
+  "failure": null,
+  "notes": [
+    "对照组：正常收到 [DONE]，说明断连样本里的中断确实来自客户端 abort，不是网关自己断的"
+  ]
+}

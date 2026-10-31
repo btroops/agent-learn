@@ -1,0 +1,79 @@
+{
+  "scenario": "timeout-total",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T12:59:28.038Z",
+  "layer": "connection",
+  "hypothesis": "总时长超时：HTTP 200 已到、已有事件产出，abort 发生在流中途（与首字节超时形态不同）",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json",
+      "accept": "text/event-stream"
+    },
+    "body": {
+      "model": "DeepSeek-V4.1-Flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "请逐个输出从 1 到 600 的数字，每行一个，不要省略任何数字。"
+        }
+      ],
+      "max_tokens": 5000
+    }
+  },
+  "http": {
+    "status": 200,
+    "statusText": "OK",
+    "contentType": "text/event-stream;charset=utf-8",
+    "rateLimitHeaders": {},
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "text/event-stream;charset=utf-8",
+      "date": "Sat, 31 Oct 2026 12:59:22 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793451562577",
+      "req-cost-time": "28",
+      "resp-start-time": "1793451562605",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "21",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:59:22.037Z",
+    "responseHeadersMs": 3081,
+    "firstBodyByteMs": 3081,
+    "lastEventMs": 5350,
+    "totalMs": 6001,
+    "abortedAtMs": 6000
+  },
+  "stream": {
+    "eventCount": 120,
+    "chunkCount": 120,
+    "bytesReceived": 31200,
+    "endedWithDone": false,
+    "errorEvent": null,
+    "firstEventData": "{\"id\":\"chatcmpl-4bb4e520-1d6f-4356-8797-3eb88fa985cf\",\"object\":\"chat.completion.chunk\",\"created\":1793451562,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"prompt_token_ids\":null,\"prompt_text\":null}",
+    "lastEventData": "{\"id\":\"chatcmpl-4bb4e520-1d6f-4356-8797-3eb88fa985cf\",\"object\":\"chat.completion.chunk\",\"created\":1793451562,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"44\\n45\\n46\\n\"},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}]}"
+  },
+  "failure": {
+    "name": "Error",
+    "message": "total-timeout",
+    "abortedBy": "total-timeout"
+  },
+  "notes": [
+    "首字节 3081ms 已到达，abort 在 6000ms，属流中途中断（不是连接层超时）",
+    "abort 前已收到 120 个事件",
+    "与首字节超时的本质区别：HTTP 200 已到手、事件已大量落袋，失败发生在流中途；此时若直接重试，已消耗的 token 全部作废"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "scenario": "429-rate-limit",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T12:59:46.392Z",
+  "layer": "none",
+  "hypothesis": "连续快速请求触发限流，重点看 Retry-After 是否存在；Day1 已发现网关无 x-ratelimit-* 头",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "concurrency": 12,
+    "model": "DeepSeek-V4.1-Flash"
+  },
+  "http": {
+    "status": 200,
+    "statusText": "OK",
+    "contentType": "text/event-stream;charset=utf-8",
+    "rateLimitHeaders": {},
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "text/event-stream;charset=utf-8",
+      "date": "Sat, 31 Oct 2026 12:59:44 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793451584976",
+      "req-cost-time": "25",
+      "resp-start-time": "1793451585001",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "18",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:59:46.392Z",
+    "responseHeadersMs": null,
+    "firstBodyByteMs": null,
+    "lastEventMs": null,
+    "totalMs": 0,
+    "abortedAtMs": null
+  },
+  "stream": {
+    "eventCount": 5,
+    "chunkCount": 4,
+    "bytesReceived": 1175,
+    "endedWithDone": true,
+    "errorEvent": null,
+    "firstEventData": "{\"id\":\"chatcmpl-bb95833e-eb33-464e-a56e-cd58424d4fcf\",\"object\":\"chat.completion.chunk\",\"created\":1793451585,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"prompt_token_ids\":null,\"prompt_text\":null}",
+    "lastEventData": "[DONE]"
+  },
+  "failure": null,
+  "notes": [
+    "并发 12 个请求，HTTP 状态分布：[200,200,200,200,200,200,200,200,200,200,200,200]",
+    "未复现 429：该网关当前不做限流（或阈值远高于本次并发），重试策略不能依赖 429 一定会出现",
+    "限流头样本：{}",
+    "各请求失败形态：[null,null,null,null,null,null,null,null,null,null,null,null]",
+    "http / stream / failure 字段取自单个代表样本，不是这 12 个响应的聚合"
+  ]
+}

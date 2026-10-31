@@ -1,0 +1,63 @@
+{
+  "scenario": "bad-params",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T12:59:19.193Z",
+  "layer": "connection",
+  "hypothesis": "非法参数应在请求校验阶段被拒（4xx），不该进入流",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "body": {
+      "model": "DeepSeek-V4.1-Flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "用一句话说明什么是 TCP。"
+        }
+      ],
+      "temperature": 99,
+      "max_tokens": -1
+    }
+  },
+  "http": {
+    "status": 400,
+    "statusText": "Bad Request",
+    "contentType": "application/json; charset=UTF-8",
+    "rateLimitHeaders": {},
+    "headers": {
+      "connection": "keep-alive",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Sat, 31 Oct 2026 12:59:19 GMT",
+      "req-arrive-time": "1793451559432",
+      "req-cost-time": "35",
+      "resp-start-time": "1793451559468",
+      "server": "nginx",
+      "transfer-encoding": "chunked",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "22",
+      "x-vllm-instance": "a"
+    },
+    "bodyText": "{\"error\":{\"message\":\"temperature must be in [0, 2], got 99.0. (parameter=temperature, value=99.0)\",\"type\":\"BadRequestError\",\"param\":\"temperature\",\"code\":400}}",
+    "bodyJson": {
+      "error": {
+        "message": "temperature must be in [0, 2], got 99.0. (parameter=temperature, value=99.0)",
+        "type": "BadRequestError",
+        "param": "temperature",
+        "code": 400
+      }
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:59:19.193Z",
+    "responseHeadersMs": 141,
+    "firstBodyByteMs": null,
+    "lastEventMs": null,
+    "totalMs": 141,
+    "abortedAtMs": null
+  },
+  "stream": null,
+  "failure": null,
+  "notes": [
+    "实测 HTTP 400，请求校验阶段被拒",
+    "响应体是 OpenAI 标准结构 {error:{message,type,param,code}}，与 bad-model 的自定义结构不同：同一个网关的两类 4xx 用了两套错误体，解析必须两种都兜住"
+  ]
+}

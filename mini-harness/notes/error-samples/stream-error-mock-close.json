@@ -1,0 +1,69 @@
+{
+  "scenario": "stream-error-mock-close",
+  "source": "local-mock",
+  "capturedAt": "2026-10-31T12:56:52.459Z",
+  "layer": "application",
+  "hypothesis": "error 事件后直接断流：若最后一个事件完整，readSSEStream 不会报错 —— 表现为'正常结束'",
+  "request": {
+    "endpoint": "http://127.0.0.1:38143/v1-error-close/chat/completions",
+    "body": {
+      "model": "mock-model",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        }
+      ],
+      "stream": true
+    }
+  },
+  "http": {
+    "status": 200,
+    "statusText": "OK",
+    "contentType": "text/event-stream",
+    "rateLimitHeaders": {},
+    "headers": {
+      "cache-control": "no-cache",
+      "connection": "keep-alive",
+      "content-type": "text/event-stream",
+      "date": "Sat, 31 Oct 2026 12:56:52 GMT",
+      "transfer-encoding": "chunked"
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:56:52.459Z",
+    "responseHeadersMs": null,
+    "firstBodyByteMs": null,
+    "lastEventMs": null,
+    "totalMs": 87,
+    "abortedAtMs": null
+  },
+  "stream": {
+    "eventCount": 2,
+    "chunkCount": 2,
+    "bytesReceived": 0,
+    "endedWithDone": false,
+    "errorEvent": {
+      "atEventIndex": 1,
+      "atMs": 23,
+      "raw": "{\"error\":{\"message\":\"mock upstream failure\",\"type\":\"server_error\",\"code\":500}}",
+      "parsed": {
+        "error": {
+          "message": "mock upstream failure",
+          "type": "server_error",
+          "code": 500
+        }
+      }
+    },
+    "firstEventData": "{\"id\":\"mock-1\",\"object\":\"chat.completion.chunk\",\"created\":0,\"model\":\"mock-model\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"前半段回答。\"},\"finish_reason\":null}]}",
+    "lastEventData": "{\"error\":{\"message\":\"mock upstream failure\",\"type\":\"server_error\",\"code\":500}}"
+  },
+  "failure": null,
+  "notes": [
+    "本地构造，不是网关真实响应；只用来证明解析器/消费层的行为",
+    "解析层（readSSEStream）收到的事件：[\"{\\\"id\\\":\\\"mock-1\\\",\\\"object\\\":\\\"chat.completion.chunk\\\",\\\"created\\\":0,\\\"model\\\":\\\"mock-model\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"delta\\\":{\\\"content\\\":\\\"前半段回答。\\\"},\\\"finish_reason\\\":null}]}\",\"{\\\"error\\\":{\\\"message\\\":\\\"mock upstream failure\\\",\\\"type\\\":\\\"server_error\\\",\\\"code\\\":500}}\"]",
+    "消费层（streamChatCompletion）交出的 chunk：[\"{\\\"id\\\":\\\"mock-1\\\",\\\"object\\\":\\\"chat.completion.chunk\\\",\\\"created\\\":0,\\\"model\\\":\\\"mock-model\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"delta\\\":{\\\"content\\\":\\\"前半段回答。\\\"},\\\"finish_reason\\\":null}]}\",\"{\\\"error\\\":{\\\"message\\\":\\\"mock upstream failure\\\",\\\"type\\\":\\\"server_error\\\",\\\"code\\\":500}}\"]",
+    "消费层拿到了 2 个 chunk，其中 1 个是 error 负载；调用方若不显式判 'error' 就等同于成功",
+    "解析层没看到 [DONE]；由于最后一个事件完整，readSSEStream 不认为被截断，仍按正常结束处理"
+  ]
+}

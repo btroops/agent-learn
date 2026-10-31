@@ -1,0 +1,80 @@
+{
+  "scenario": "disconnect-mid-stream",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T12:59:21.981Z",
+  "layer": "connection",
+  "hypothesis": "200 建立后客户端 abort：读流应抛 AbortError；已解析事件保留，半截事件丢弃",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json",
+      "accept": "text/event-stream"
+    },
+    "body": {
+      "model": "DeepSeek-V4.1-Flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "请逐个输出从 1 到 300 的数字，每行一个，不要省略任何数字。"
+        }
+      ],
+      "max_tokens": 3000
+    }
+  },
+  "http": {
+    "status": 200,
+    "statusText": "OK",
+    "contentType": "text/event-stream;charset=utf-8",
+    "rateLimitHeaders": {},
+    "headers": {
+      "access-control-allow-headers": "DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "connection": "keep-alive",
+      "content-type": "text/event-stream;charset=utf-8",
+      "date": "Sat, 31 Oct 2026 12:59:19 GMT",
+      "referrer-policy": "origin",
+      "req-arrive-time": "1793451559558",
+      "req-cost-time": "35",
+      "resp-start-time": "1793451559593",
+      "server": "nginx",
+      "server-flag": "proxy",
+      "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "24",
+      "x-frame-options": "ALLOWALL",
+      "x-permitted-cross-domain-policies": "all",
+      "x-vllm-instance": "a",
+      "x-xss-protection": "1; mode=block"
+    }
+  },
+  "timing": {
+    "requestStartedAt": "2026-10-31T12:59:19.335Z",
+    "responseHeadersMs": 1843,
+    "firstBodyByteMs": 1844,
+    "lastEventMs": 1844,
+    "totalMs": 2646,
+    "abortedAtMs": 2644
+  },
+  "stream": {
+    "eventCount": 58,
+    "chunkCount": 58,
+    "bytesReceived": 15222,
+    "endedWithDone": false,
+    "errorEvent": null,
+    "firstEventData": "{\"id\":\"chatcmpl-93974534-a95f-46e1-a390-b91ccde2291e\",\"object\":\"chat.completion.chunk\",\"created\":1793451559,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"prompt_token_ids\":null,\"prompt_text\":null}",
+    "lastEventData": "{\"id\":\"chatcmpl-93974534-a95f-46e1-a390-b91ccde2291e\",\"object\":\"chat.completion.chunk\",\"created\":1793451559,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"100\"},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}]}"
+  },
+  "failure": {
+    "name": "Error",
+    "message": "client-cancel",
+    "abortedBy": "client-cancel"
+  },
+  "notes": [
+    "abort 发生在第 58 个事件之后（2644ms）",
+    "抛出的错误：Error: client-cancel",
+    "controller.abort(new Error(...)) 后，读流抛出的是该 reason 原样（name='Error'），不是 DOMException AbortError；按 name === 'AbortError' 判断本地取消会漏",
+    "已解析的事件保留、未成事件的半截数据丢弃：这正是 tool-accum 需要的语义（截断进 broken，不产生半截 JSON）"
+  ]
+}

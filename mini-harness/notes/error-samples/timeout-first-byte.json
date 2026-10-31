@@ -1,0 +1,43 @@
+{
+  "scenario": "timeout-first-byte",
+  "source": "gateway",
+  "capturedAt": "2026-10-31T13:25:35.019Z",
+  "layer": "connection",
+  "hypothesis": "首字节超时：fetch 阶段就 reject，拿不到 HTTP 状态码，也没有任何 SSE 事件",
+  "request": {
+    "endpoint": "https://***/s/u/***/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json",
+      "accept": "text/event-stream"
+    },
+    "body": {
+      "model": "DeepSeek-V4.1-Flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "写一段 200 字的产品介绍。"
+        }
+      ]
+    }
+  },
+  "http": null,
+  "timing": {
+    "requestStartedAt": "2026-10-31T13:25:34.968Z",
+    "responseHeadersMs": null,
+    "firstBodyByteMs": null,
+    "lastEventMs": null,
+    "totalMs": 52,
+    "abortedAtMs": 51
+  },
+  "stream": null,
+  "failure": {
+    "name": "Error",
+    "message": "first-byte-timeout",
+    "abortedBy": "first-byte-timeout"
+  },
+  "notes": [
+    "首字节是否到达：否",
+    "是否拿到 HTTP 状态：否（fetch 阶段就失败）",
+    "与总时长超时的本质区别：这里连 fetch 都没 resolve，没有状态码、没有响应头、没有任何事件，只能看到一个本地 abort 错误"
+  ]
+}

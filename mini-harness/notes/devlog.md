@@ -707,3 +707,189 @@ H2 vs H3 是同 prompt、同 token 的严格对照，唯一差异是 `response_f
 限制：n=5、单一模型、schema 只有 6 字段且文字描述精确；字段更多/描述更模糊时文字版可能掉点。H2/H3 的 completion 波动大（561–1565），思考长度仍主导延迟。
 
 离线复验：`--revalidate=day5k` 旧口径（`EVENT_SCHEMA`）0/20，新口径（`intentSchema`）15/20，翻转 15 份——验证了 `intentSchema` 修正的必要性。
+
+### 15. P4：补 B 组四个证据缺口（2026-10-31，18 次请求）
+
+样本 `samples/day5l/`。判据在跑之前写定：每条缺口先写清"生效应看到什么、未生效应看到什么"，避免事后解释。
+
+实现改动：新增 8 个场景与 7 个工具定义（`structured.ts` P4 段）；`sentSchema()` 增加 `toolName` 参数——多工具场景必须按"实际被调用的工具"取 `parameters`，取 `tools[0]` 会拿错尺子。
+
+#### 15.1 `required`：3/3 vs 1/3，但没有决定性反例
+
+工具 `emit_checked`，`checksum` 对模型没有任何语义线索（原文没有、也不在其它字段里）。两个场景只差 `required` 是否包含它。
+
+| 场景 | checksum 在 required | 出现 | 输出 |
+|---|---|---|---|
+| P4-1a `b-strict-required-in` | 是 | **3/3** | `0000021B` / `7C4A9B21` / `00029DC8` |
+| P4-1b `b-strict-required-out` | 否 | **1/3** | 仅 run3 给了 `7B2E4A19` |
+
+`prompt_tokens` 416 vs 414，只差 `"checksum"` 那两个 token。
+
+**结论**：与"`required` 提高字段出现率"一致，且 **required 里的字段一次都没缺**。但判别力弱，两条原因：
+
+1. out 组 run3 的 reasoning 是“`priority, and optional checksum`… 我需要产出一个 checksum，我应该算一个”——模型**知道它是可选的，仍然主动填了**。出现率差异可能只来自"required 提醒了它"，不是语法强制。
+2. n=3，且 `checksum` 是可编造的字符串，模型想填就能填。要硬证据须让 required 字段**无法编造**（例如 `enum:["FIXED"]`），同时测 required + enum。
+
+**这条缺口只补到"一致"，没补到"证明"。**
+
+#### 15.2 `enum`：3/3 被压成 `low`，决定性
+
+工具 `emit_event_enum`，`strict:true`，`priority.enum = ["low"]`，原文"优先级高"。
+
+| run | priority | duration_hours / owner |
+|---|---|---|
+| 1 | `low` | 2 / 张三 |
+| 2 | `low` | 2 / 张三 |
+| 3 | `low` | 2 / 张三 |
+
+`high` 不在枚举里，而模型倾向给 `high`，三次全是 `low`。**与 A 路径 S2（3/3 `low`）一致**：strict 开启后 enum 在 tools 通道同样被强制。
+
+#### 15.3 `strict` 是 per-tool，不是 per-request（决定性，补上 §11 最后一条）
+
+两个工具 `emit_event_strict`（`strict:true`）与 `emit_event_loose`（不写），`parameters` 完全相同（都带 `minimum:100`），description 也相同，`tool_choice:"required"` 让模型自己选。另跑一组交换 tools 顺序，排除位置偏好。
+
+| 场景 | run | 选中的工具 | duration_hours | 本地校验 |
+|---|---|---|---|---|
+| strict 在前 | 1 | `emit_event_strict` | 211 | OK |
+| | 2 | `emit_event_loose` | **2** | FAIL |
+| | 3 | `emit_event_strict` | 200 | OK |
+| loose 在前 | 1 | `emit_event_loose` | **2** | FAIL |
+| | 2 | `emit_event_loose` | **2** | FAIL |
+| | 3 | `emit_event_strict` | 202 | OK |
+
+6 次里两个工具都被选到过（strict 3 次、loose 3 次），**结果完全按工具分界，与顺序无关**：
+
+- strict 工具：211 / 200 / 202，全部 ≥100；
+- loose 工具：2 / 2 / 2，全部等于原文值。
+
+**结论**：`strict` **按工具声明生效**。既不是"只对 `tool_choice` 点名的那个工具生效"（该假设被推翻），也不是"按请求全局生效"。§11 第三条限制已解决。
+
+**对 W3 的直接后果**：工具注册表里**每一个**工具都必须显式 `strict:true`。漏一个，那个工具的参数就完全没有服务端约束，而请求整体看起来"开了 strict"。
+
+#### 15.4 坏 schema：tools 通道的失败形态与 A 路径不同
+
+| 场景 | 坏法 | A 路径对照 | B 路径（strict） |
+|---|---|---|---|
+| P4-4a `b-strict-ghost` | `required` 含 `properties` 里不存在的 `ghost` | 200 + 静默弱化（§12.3） | **200**，输出只有 `title`，本地校验报 `$.ghost 缺失` |
+| P4-4b `b-strict-unsat` | `priority.enum = []` | **400** `Grammar error: Unsatisfiable schema`（§12.2） | **200**，输出 `priority:"高"`，完全无视枚举 |
+| P4-4c `b-strict-noextra` | `additionalProperties:false` 只允许 `title`，prompt 强要 `duration_hours` | 未测 | 200，输出只有 `title`，无额外字段 |
+
+**最重要的一条在中间那行**：同一份 `enum:[]` 死路 schema，放 `response_format` 里在编译期直接 400（请求没进推理）；放 `tools` + `strict:true` 里返回 200，输出 `priority:"高"`——枚举是空的，任何值都不合法，它就是违反了。
+
+同一份 schema、同一个 strict 声明，两个通道一个硬拒一个放行。说明 tools 通道在"编译不了"时**不会报错**：要么 fail-open 退化成无约束，要么把空枚举当作"没有枚举约束"。两者对 harness 的影响相同：**`strict:true` 不是"已约束"的凭证，编译失败可以完全静默。**
+
+**证据限制（三条，都不能省）**：
+
+1. `b-strict-unsat` 的 reasoning 显示模型自己识别出"empty enum，任何值都会失败"，然后**故意**传 `"高"` 来试。所以它不能证明"编译器把空枚举编译成了任意值"，只能证明**服务端没有拦住**。"没拦住"这一点是硬的。
+2. `b-strict-noextra` 的 reasoning 是"the tool schema doesn't support duration_hours… the tool can't include extra fields"——模型是**自觉**遵守 schema 的。这条无法区分"`additionalProperties:false` 生效"与"模型自己决定不加"，判别力与 A3 一样低。
+3. 三个场景各只有 1 次，`ghost` / `unsat` 需要重复加固。
+
+#### 15.5 修订清单
+
+- §11 第一条（B+strict 下 `required`）：**已补**，与"提高出现率"一致，无决定性反例，判别力弱。
+- §11 第二条（B+strict 下 `enum`）：**已补**，3/3 压成 `low`，决定性。
+- §11 第三条（strict 是否只对强制工具生效）：**已补**，否，per-tool 生效，6 次完全分离，决定性。
+- §11 第四条（坏 schema 弱化形态）：**部分补**。`ghost` 与 A 路径一致；`enum:[]` 在 tools 通道 200 且无约束，与 A 路径 400 相反，说明编译失败可能静默 fail-open。`additionalProperties` 那条判别力不足，仍属未测。
+
+#### 15.6 对 W3 的影响
+
+1. 每个工具都要显式 `strict:true`，注册表要能检查"有没有漏"——strict 是 per-tool 的。
+2. 客户端校验不能因为 `strict:true` 就降级。strict 只保证"能编译出来的那部分约束"，编译失败是静默的。
+3. 工具 schema 不要放不可满足的约束（空枚举、矛盾区间）。A 路径会 400 让你发现，tools 通道会让你以为生效了。
+
+---
+
+## Day 6 — 2026-10-31 故障形态实测
+
+**目标**：拿到 4 类故障的真实响应，作为 W3 重试策略的依据。只观测，不实现重试。
+
+### 1. 产出
+
+| 文件 | 说明 |
+|---|---|
+| `ts/src/probe.ts` | 4 类故障 + 正常流对照组；统一记录 HTTP 状态 / 头 / 体 / 时间线 / 流内 error |
+| `notes/error-samples/*.json` | 11 份脱敏样本，`index.json` 为汇总 |
+
+复现命令（在 `mini-harness/ts` 下）：
+
+```bash
+node --env-file=../.env src/probe.ts                              # 除 429 外全部场景
+node --env-file=../.env src/probe.ts --only=429 --rate-limit=30   # 429 并发冲击（会打网关）
+node --env-file=../.env src/probe.ts --reindex                    # 只重建索引，不发请求
+```
+
+### 2. 实测结果
+
+| 场景 | HTTP | 层级 | 关键事实 |
+|---|---|---|---|
+| 429（12 并发 / 30 并发各一次） | 全 200 | none | **未复现**；无 `Retry-After`、无 `x-ratelimit-*` |
+| 不存在的模型（非流式） | 404 | connection | `{"code":400,"success":false,"data":null,"msg":"模型网关密钥未绑定该模型"}` |
+| 不存在的模型（流式） | 404 | connection | 与上一条 body 完全一致：`stream:true` 不改变错误形态 |
+| 非法参数 `temperature=99` | 400 | connection | OpenAI 标准 `{"error":{"message","type":"BadRequestError","param","code":400}}` |
+| 断连（首片后 800ms abort） | 200 | connection | 58 个事件后抛 `Error: client-cancel` |
+| 首字节超时（50ms） | 无 | connection | fetch 未 resolve：无状态码、无响应头、无事件 |
+| 总时长超时（6000ms） | 200 | connection | 首片 3081ms，182 个事件后切断 |
+| 3.6 万字符 prompt | 200 | none | 正常完成，未触发 context 超限 |
+| 正常长流（对照） | 200 | none | 12.0s，正常收到 `[DONE]` |
+| 200 + 流中 error（本地 mock） | 200 | application | 两个变体都不报错 |
+
+### 3. 四条结论
+
+**① 该网关不产生 429，也不产生 5xx。** 用不存在的模型 / 非法参数只能拿到 404 / 400。清单里"5xx：请求一个不存在的模型名"这条假设在本网关不成立，已按真实状态码记录；重试策略不能只按清单假设写。
+
+**② 同一个网关有两套 4xx 错误体，且 404 那条自相矛盾。**
+
+- 404：网关自定义 `{code, success, data, msg}`，HTTP 404 而 `body.code` 写 400
+- 400：OpenAI 标准 `{error:{message, type, param, code}}`
+
+`code` 在两个结构里含义不同（一个是网关业务码，一个是 HTTP 语义码）。解析错误必须两种都兜住：只认 `error.type` 会在 404 上拿到 undefined，只认 HTTP 状态码会丢掉 `msg` 里的具体原因。
+
+**③ 本地 abort 抛出的不是 `AbortError`。** `controller.abort(new Error("client-cancel"))` 之后，读流抛出的是该 reason 原样（`name === "Error"`）。按 `err.name === "AbortError"` 判断"用户取消"会漏；应读 `signal.reason` 或自己维护标志位。
+
+**④ "被取消"与"正常结束"在消费层无法区分。** 已解析事件全部保留、未成事件的半截数据被丢弃（这正是 tool-accum 需要的语义），但如果取消落在两片之间，`reader.read()` 可能直接返回 done，循环看起来就是正常退出。
+
+### 4. 关键观察：200 + 流中 error 会被静默吞掉
+
+真实网关试了超长 prompt 和正常长流，都没出现流中 error。用本地 mock 补两个变体（样本里 `source: "local-mock"`，不冒充网关样本）：
+
+| 变体 | 解析层 | 消费层 | 结果 |
+|---|---|---|---|
+| error 后发 `[DONE]` | 3 个事件（含 `[DONE]`） | 3 个 chunk（含 error 负载） | 不报错 |
+| error 后直接断 | 2 个事件（无 `[DONE]`） | 2 个 chunk | 不报错 |
+
+原因有三处：
+
+- `streamChatCompletion` 把 `{"error":...}` 当普通 chunk `yield` 出去，调用方不判 `error` 字段就当成功；
+- 第二个变体里最后一个事件是完整事件，`parser.end()` 的 `leftoverLine` / `pendingData` 都为空，"截断检测"根本不触发；
+- `[DONE]` 被 `streamChatCompletion` 直接 `return` 掉，调用方无法从返回值区分"正常 `[DONE]` 结束"与"error 后结束"。
+
+所以对验收问题的答案是：**会静默吞掉**。W2 的 loop 必须把流内 `error` 显式转成失败，不能指望截断检测兜底。
+
+### 5. 计划外发现：这个网关的流是"攒批"的
+
+长输出（1–300）实测只有 3 个网络分片（`samples/day6-longprofile.chunks.json`）：首片 15KB 落在 4057ms，第二片 5670ms，第三片 6867ms。首片到达时里面已经有几十个事件，"按事件数触发中断"会瞬间读完、根本不在传输途中。断连与超时场景最终都改成按时间触发（`abortAfterFirstByteMs`）。
+
+### 6. 重试判定表
+
+| 形态 | 层级 | 可重试 | 理由 |
+|---|---|---|---|
+| 首字节超时（fetch 未 resolve） | connection | 是，立即重试 | 0 token 消耗 |
+| 429 且带 `Retry-After` | connection | 是，按头等待 | 本网关未复现，兼容其他供应商必须支持 |
+| 429 无 `Retry-After` | connection | 是，指数退避 + jitter + 本地计数 | Day1 已证该网关无限流头 |
+| 502 / 503 / 504 | connection | 是，有上限 | 上游实例故障，通常瞬态 |
+| 500 | connection | 谨慎，至多 1 次 | 可能是确定性 bug，重试只放大成本 |
+| 400 参数非法 | connection | 否 | 同一请求必然同样失败，要改请求 |
+| 404 模型不存在 / 未绑定 | connection | 否 | **人工介入**：改 model 或申请权限 |
+| 流中途客户端取消 | connection | 否 | 是用户意图，不是故障 |
+| 总时长超时（已产生 token） | connection | 是，但计入单轮预算 | 已消耗 token 作废，不能无限重试 |
+| 200 + 流中 error | application | 是 | 当前实现感知不到，W2 先修 |
+| 200 无 `[DONE]` 且末事件完整 | 现状误判为 none | 是 | 现在当成功处理，需显式校验结束原因 |
+| 200 正常 `[DONE]` | none | 否 | — |
+
+人工介入类只有两种：404 模型未绑定、Day5 的 `Unsatisfiable schema`（400）。重试 100 次也是同样结果。
+
+### 7. 遗留
+
+- [ ] W2：`streamChatCompletion` 要把流内 `error` 转成失败，并暴露"为什么结束"（done / error / truncated / aborted）
+- [ ] W3：重试实现按上表来，不要只按 HTTP 状态码分类
+- [ ] 换网关后重测 429 与 5xx：本机这两类没有真实样本
