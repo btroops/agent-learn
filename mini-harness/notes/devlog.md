@@ -388,11 +388,11 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 > **2026-10-31 复核**：`minimum` 的封禁状态随版本与模型类型变化，并非永久结论（见 §10.1）；另外"tools 通道不校验 strict"**未验证**，因为 B 路径根本没写 `strict`（见 §10.2）。
 
-**③ schema 不计入 prompt_tokens（本网关特有）。** 同一任务：A 组 75 tokens，C2 组 198（+123 是文字 schema），B 组 451（+376 是工具定义）。
+**③ schema 不计入 prompt_tokens。** 同一任务：A 组 75 tokens，C2 组 198（+123 是文字 schema），B 组 451（+376 是工具定义）。
 
-也就是说 A 的 schema 走的是"带外"通道（编译成 grammar），一次复杂 schema 在 A 里是**零 prompt 成本**。这与 OpenAI 官方（会把 schema 序列化进 prompt 计费）不同，属于网关实现差异，换供应商后这个结论必须重测。
+也就是说 A 的 schema 走的是"带外"通道（编译成 grammar），一次复杂 schema 在 A 里是**零 prompt 成本**。这是 guided decoding 实现的共性（OpenAI 同样不计，见 §10.3），不是本网关独有；但 strict 校验与关键字支持范围因供应商而异，换供应商后这些结论必须重测。
 
-> **2026-10-31 复核（不改上文）**：后半句"OpenAI 会把 schema 序列化进 prompt 计费"不成立——外部资料显示 OpenAI 同样不计 schema token，见 §10.3。零 prompt 成本是 guided decoding 的共性，不是本网关独有。
+> **2026-10-31 复核**：原句"OpenAI 会把 schema 序列化进 prompt 计费"已删除，依据见 §10.3。
 
 ### 4. 三列对比表
 
@@ -535,7 +535,7 @@ A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶
 
 #### 10.3 更正：OpenAI 也不把 schema 计入 prompt_tokens
 
-§3 ③ 原文说"OpenAI 会把 schema 序列化进 prompt 计费，所以零 prompt 成本是本网关特有"。**这条不成立**：
+§3 ③ 曾写"OpenAI 会把 schema 序列化进 prompt 计费，所以零 prompt 成本是本网关特有"（该句已于 2026-10-31 从原文删除）。**这条不成立**：
 
 - 2024-08 的公开实验（gpt-4o-mini，固定 prompt，未在本仓库存档）：schema 字段越加越多，`prompt_tokens` 恒定 18，说明 schema 不在计费上下文里；
 - 2026 年外部资料同样写"no extra token cost，只多一次编译延迟（约 200–400ms，之后缓存）"。
