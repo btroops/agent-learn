@@ -1,0 +1,140 @@
+{
+  "capturedAt": "2026-10-31T11:54:10.255Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "event_hard",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "district": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "district",
+                "address"
+              ],
+              "additionalProperties": false
+            },
+            "start_time": {
+              "type": "string"
+            },
+            "duration_hours": {
+              "type": "number",
+              "minimum": 100
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "deferred",
+                "blocked",
+                "cancelled",
+                "unknown"
+              ]
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "location",
+            "start_time",
+            "duration_hours",
+            "priority",
+            "owner"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "intentSchema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "district",
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "start_time": {
+        "type": "string"
+      },
+      "duration_hours": {
+        "type": "number",
+        "minimum": 100
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "deferred",
+          "blocked",
+          "cancelled",
+          "unknown"
+        ]
+      },
+      "owner": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "location",
+      "start_time",
+      "duration_hours",
+      "priority",
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-8df2a710-37a0-4e54-af99-a9b4a07391b9\",\"object\":\"chat.completion\",\"created\":1793447648,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\",\\\"address\\\":\\\"杭州西湖区\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":2000,\\\"priority\\\":\\\"unknown\\\",\\\"owner\\\":\\\"unknown\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户中文。要求把这句话转成 JSON 只输出 JSON 不要解释 markdown。需要决定 JSON 结构。句子：明天上午十点在杭州西湖区开产品评审会，预计2小时，负责人张三，优先级高。需要提取字段合理：会议主题/事项 产品评审会；时间 明天上午十点；地点 杭州西湖区；预计时长 2小时；负责人 张三；优先级 高。需要只输出 JSON。注意“明天”相对日期未给，保留字符串。JSON key 可中文或英文。只输出 JSON 对象。确保合法 JSON，无 markdown。可以：\\n{\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}\\n只输出这个。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":299,\"completion_tokens\":224,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":172}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

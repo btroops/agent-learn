@@ -1,0 +1,140 @@
+{
+  "capturedAt": "2026-10-31T11:55:01.606Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\nJSON 必须严格符合以下结构：\n{\n  \"title\": string,\n  \"location\": { \"city\": string, \"district\": string, \"address\": string },  // 三个子字段都必填\n  \"start_time\": string,\n  \"duration_hours\": number,                // 必须 >= 100\n  \"priority\": \"low\" | \"medium\" | \"deferred\" | \"blocked\" | \"cancelled\" | \"unknown\",\n  \"owner\": string\n}\n所有字段必填，不允许出现上面未列出的字段。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "event_hard",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "district": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "district",
+                "address"
+              ],
+              "additionalProperties": false
+            },
+            "start_time": {
+              "type": "string"
+            },
+            "duration_hours": {
+              "type": "number",
+              "minimum": 100
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "deferred",
+                "blocked",
+                "cancelled",
+                "unknown"
+              ]
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "location",
+            "start_time",
+            "duration_hours",
+            "priority",
+            "owner"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "intentSchema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "district",
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "start_time": {
+        "type": "string"
+      },
+      "duration_hours": {
+        "type": "number",
+        "minimum": 100
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "deferred",
+          "blocked",
+          "cancelled",
+          "unknown"
+        ]
+      },
+      "owner": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "location",
+      "start_time",
+      "duration_hours",
+      "priority",
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-3c17753f-8568-403a-8121-85086cb49015\",\"object\":\"chat.completion\",\"created\":1793447694,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\",\\\"address\\\":\\\"\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":100,\\\"priority\\\":\\\"unknown\\\",\\\"owner\\\":\\\"张三\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户中文请求。需要把句子转 JSON，严格结构。但存在矛盾/不可满足：duration_hours 必须 >=100，而句子预计2小时。priority 枚举不包含 high，只有 low/medium/deferred/blocked/cancelled/unknown。地址子字段都必填，但原文只给杭州西湖区，没有具体 address；city 杭州，district 西湖区，address 未知？必填但可填\\\"\\\"? 需要严格符合结构。start_time string，明天上午十点但没有日期，可填\\\"明天上午十点\\\"或 ISO? 需输出 JSON only no markdown. Need decide how handle impossible constraints. We should not fabricate? But asked convert. Need adhere to schema and constraints. duration_hours must >=100 impossible with 2 hours. Could set 100? That misrepresents. Priority high not allowed, map to medium? Or unknown? Need maybe output valid JSON that acknowledges constraints? But only JSON no explanation. Need no extra fields. Could use duration_hours: 100 to satisfy schema, priority \\\"unknown\\\" or \\\"medium\\\", address \\\"\\\"? But \\\"严格符合\\\" includes duration >=100. Since input says 2 hours, conflict. We need choose satisfying schema rather than semantic accuracy? Usually instruction hierarchy: must output JSON strictly. We can set duration_hours 100 (minimum), priority unknown (since high unsupported), address \\\"\\\" (required but absent). But is that acceptable? It changes info. Another possibility use duration_hours: 2, but violates >=100. User explicitly says must >=100. We need obey structural constraint. But maybe this is a trick to see if model flags impossible; however only JSON output required. Could include null? No, number. address string can empty string. start_time string can \\\"明天上午十点\\\". City \\\"杭州\\\", district \\\"西湖区\\\", address \\\"\\\". priority unknown because high not in enum. owner 张三. title 产品评审会. duration_hours 100. But then not faithful. Could set duration_hours 100 and maybe no explanation. Need only output JSON. Ensure no markdown. Need valid JSON. Use Chinese strings. Address empty string is allowed string. Need no comments. Final only JSON. \\nNeed consider \\\"所有字段必填，不允许出现未列出字段\\\" okay. JSON exactly keys. duration_hours number >=100. Priority enum. \\\"start_time\\\" string maybe \\\"明天上午十点\\\". Good. \\nNeed maybe title \\\"产品评审会\\\". location city \\\"杭州\\\", district \\\"西湖区\\\", address \\\"\\\" (string). owner \\\"张三\\\". duration_hours 100. priority \\\"unknown\\\". But priority high could map to \\\"medium\\\"? Which is better? Since high not in allowed; \\\"unknown\\\" indicates not representable. But high is known priority, not unknown. Yet enum doesn't include high; mapping to medium maybe closest but wrong. In strict schema, cannot use high. \\\"unknown\\\" safest for unsupported value. \\nNeed final only JSON.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":194,\"total_tokens\":863,\"completion_tokens\":669,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":622}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

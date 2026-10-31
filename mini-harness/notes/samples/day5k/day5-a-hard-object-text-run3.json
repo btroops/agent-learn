@@ -1,0 +1,78 @@
+{
+  "capturedAt": "2026-10-31T11:55:31.662Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\nJSON 必须严格符合以下结构：\n{\n  \"title\": string,\n  \"location\": { \"city\": string, \"district\": string, \"address\": string },  // 三个子字段都必填\n  \"start_time\": string,\n  \"duration_hours\": number,                // 必须 >= 100\n  \"priority\": \"low\" | \"medium\" | \"deferred\" | \"blocked\" | \"cancelled\" | \"unknown\",\n  \"owner\": string\n}\n所有字段必填，不允许出现上面未列出的字段。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "intentSchema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "district",
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "start_time": {
+        "type": "string"
+      },
+      "duration_hours": {
+        "type": "number",
+        "minimum": 100
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "deferred",
+          "blocked",
+          "cancelled",
+          "unknown"
+        ]
+      },
+      "owner": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "location",
+      "start_time",
+      "duration_hours",
+      "priority",
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-68699200-85b8-4baf-8f57-88153b00fb06\",\"object\":\"chat.completion\",\"created\":1793447725,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\",\\\"address\\\":\\\"未提供\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":100,\\\"priority\\\":\\\"unknown\\\",\\\"owner\\\":\\\"张三\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户。需要把句子转成JSON严格结构。但存在冲突约束：duration_hours 必须 >=100，而原句预计2小时。priority高但允许枚举没有high，只有low/medium/deferred/blocked/cancelled/unknown。location address字段必填但原文只有城市杭州、区西湖区，没有具体地址。所有字段必填，不允许额外字段。只输出JSON。需要处理矛盾。我们需要输出严格符合结构。但如何满足duration>=100？ 原信息2小时，但结构要求>=100。不能添加解释。也许必须将 duration_hours 设为 100 以满足 schema，但这与原句不符。需要判断遵循结构优先？ 用户明确\\\"必须严格符合以下结构\\\"且\\\"duration_hours number 必须>=100\\\"。 这是不可能同时忠实原文且满足schema。我们只能输出JSON符合schema。需要为address填什么？ 原文没有地址，但必填。可以填\\\"未提供\\\"或\\\"西湖区\\\"？ City杭州 district西湖区 address未知。为了严格必填，填\\\"未提供\\\" string。start_time \\\"明天上午十点\\\" 需要 string; 可以保留原表达 \\\"明天上午十点\\\" 而不是 ISO，因为未指定格式。priority高不在枚举，不能填high。需要映射到最接近？ \\\"medium\\\"? 高优先级对应 high，但枚举无 high。可选 unknown? 如果严格符合枚举，选unknown表示无法表示？ 或 medium? 应该不能虚构。owner张三。title \\\"产品评审会\\\"。duration_hours必须>=100，设为100? 这明显不忠实。或许 duration_hours 2 会违反必须>=100。用户说\\\"必须 >= 100\\\"，严格json需要满足。选100。需要只输出JSON无markdown。注意JSON不能有注释。字段顺序可按结构。address必填 string 可以空字符串? 必填但空字符串算string? 最好\\\"未提供\\\"。但\\\"不允许出现未列出字段\\\"，可以。输出：\\n{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\",\\\"address\\\":\\\"未提供\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":100,\\\"priority\\\":\\\"unknown\\\",\\\"owner\\\":\\\"张三\\\"}\\n需要不要解释。但可能应该用 medium? 高优先级没有枚举。unknown 更合理。duration 100 是荒谬但必须。address未提供。Start_time string。只输出 JSON。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":194,\"total_tokens\":755,\"completion_tokens\":561,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":513}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}
