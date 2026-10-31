@@ -108,6 +108,28 @@ const EMIT_TOOL_STRICT_BAD = {
   },
 };
 
+/**
+ * P1-1：生成约 10KB 的大 schema。
+ * required 只留第一个字段：输出可以很小，便于把"编译开销"与"生成开销"分开看。
+ * description 只应存在于 schema 里；若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。
+ */
+function bigSchema(fields: number): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (let i = 1; i <= fields; i += 1) {
+    properties[`field_${String(i).padStart(3, "0")}`] = {
+      type: "string",
+      enum: ["x"],
+      description: `第 ${i} 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。`,
+    };
+  }
+  return {
+    type: "object",
+    properties,
+    required: ["field_001"],
+    additionalProperties: false,
+  };
+}
+
 /** 把同一份 schema 用自然语言完整描述出来，用于"没有 response_format 时"的公平对照 */
 const SCHEMA_TEXT = `JSON 必须严格符合以下结构：
 {
@@ -314,6 +336,69 @@ const scenarios: Scenario[] = [
       tool_choice: { type: "function", function: { name: "emit_event_bad" } },
     },
   },
+  // ---- P1：大 schema 与语法死路（2026-10-31） ----
+  {
+    id: "a-big-schema",
+    label: "P1-1 约 10KB / 120 字段大 schema（prompt_tokens 是否仍为 75 + 冷热延迟）",
+    repeat: 2,
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big", strict: true, schema: bigSchema(120) },
+      },
+    },
+  },
+  {
+    id: "a-range-deadlock",
+    label: "P1-2 minimum:100 且 maximum:1（语法死路）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.duration_hours.minimum = 100;
+            props.duration_hours.maximum = 1;
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "a-empty-enum",
+    label: "P1-3 priority enum:[]（空枚举）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.priority.enum = [];
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "a-required-ghost",
+    label: "P1-4 required 含不存在的 ghost（与 additionalProperties:false 冲突）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            s.required = [...(s.required as string[]), "ghost"];
+          }),
+        },
+      },
+    },
+  },
 ];
 
 // ---------- 最小 JSON Schema 校验器（够这次实验用） ----------
@@ -415,12 +500,27 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
   };
 
   const startedAt = performance.now();
-  const res = await fetch(`${api}/chat/completions`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(requestBody),
-  });
-  const text = await res.text();
+  let res: Response;
+  let text: string;
+  try {
+    res = await fetch(`${api}/chat/completions`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(requestBody),
+      // 死路文法可能让服务端一直不返回；超时后记失败样本，不拖死整批实验
+      signal: AbortSignal.timeout(45_000),
+    });
+    text = await res.text();
+  } catch (error) {
+    const elapsedMs = Math.round(performance.now() - startedAt);
+    return {
+      scenario: scenario.id,
+      run,
+      status: 0,
+      elapsedMs,
+      errorText: `请求异常或超时：${(error as Error).name}: ${(error as Error).message}`,
+    };
+  }
   const elapsedMs = Math.round(performance.now() - startedAt);
 
   const obs: Observation = { scenario: scenario.id, run, status: res.status, elapsedMs };
