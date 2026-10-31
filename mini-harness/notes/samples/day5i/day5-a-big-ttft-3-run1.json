@@ -1,0 +1,882 @@
+{
+  "capturedAt": "2026-10-31T11:14:13.561Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "reasoning_effort": "none",
+    "max_tokens": 1,
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "big_ttft_3",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "description": "ttft probe ttft-c",
+          "properties": {
+            "field_001": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_002": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_003": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_004": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_005": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_006": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_007": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_008": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_009": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_010": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_011": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_012": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_013": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_014": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_015": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_016": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_017": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_018": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_019": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_020": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_021": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_022": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_023": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_024": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_025": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_026": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_027": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_028": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_029": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_030": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_031": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_032": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_033": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_034": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_035": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_036": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_037": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_038": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_039": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_040": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_041": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_042": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_043": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_044": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_045": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_046": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_047": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_048": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_049": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_050": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_051": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_052": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_053": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_054": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_055": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_056": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_057": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_058": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_059": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_060": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_061": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_062": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_063": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_064": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_065": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_066": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_067": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_068": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_069": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_070": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_071": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_072": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_073": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_074": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_075": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_076": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_077": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_078": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_079": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_080": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_081": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_082": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_083": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_084": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_085": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_086": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_087": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_088": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_089": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_090": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_091": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_092": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_093": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_094": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_095": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_096": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_097": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_098": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_099": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_100": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_101": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_102": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_103": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_104": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_105": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_106": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_107": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_108": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_109": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_110": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_111": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_112": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_113": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_114": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_115": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_116": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_117": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_118": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_119": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_120": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            },
+            "field_121": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            }
+          },
+          "required": [
+            "field_001",
+            "field_002",
+            "field_003",
+            "field_004",
+            "field_005",
+            "field_006",
+            "field_007",
+            "field_008",
+            "field_009",
+            "field_010",
+            "field_011",
+            "field_012",
+            "field_013",
+            "field_014",
+            "field_015",
+            "field_016",
+            "field_017",
+            "field_018",
+            "field_019",
+            "field_020",
+            "field_021",
+            "field_022",
+            "field_023",
+            "field_024",
+            "field_025",
+            "field_026",
+            "field_027",
+            "field_028",
+            "field_029",
+            "field_030",
+            "field_031",
+            "field_032",
+            "field_033",
+            "field_034",
+            "field_035",
+            "field_036",
+            "field_037",
+            "field_038",
+            "field_039",
+            "field_040",
+            "field_041",
+            "field_042",
+            "field_043",
+            "field_044",
+            "field_045",
+            "field_046",
+            "field_047",
+            "field_048",
+            "field_049",
+            "field_050",
+            "field_051",
+            "field_052",
+            "field_053",
+            "field_054",
+            "field_055",
+            "field_056",
+            "field_057",
+            "field_058",
+            "field_059",
+            "field_060",
+            "field_061",
+            "field_062",
+            "field_063",
+            "field_064",
+            "field_065",
+            "field_066",
+            "field_067",
+            "field_068",
+            "field_069",
+            "field_070",
+            "field_071",
+            "field_072",
+            "field_073",
+            "field_074",
+            "field_075",
+            "field_076",
+            "field_077",
+            "field_078",
+            "field_079",
+            "field_080",
+            "field_081",
+            "field_082",
+            "field_083",
+            "field_084",
+            "field_085",
+            "field_086",
+            "field_087",
+            "field_088",
+            "field_089",
+            "field_090",
+            "field_091",
+            "field_092",
+            "field_093",
+            "field_094",
+            "field_095",
+            "field_096",
+            "field_097",
+            "field_098",
+            "field_099",
+            "field_100",
+            "field_101",
+            "field_102",
+            "field_103",
+            "field_104",
+            "field_105",
+            "field_106",
+            "field_107",
+            "field_108",
+            "field_109",
+            "field_110",
+            "field_111",
+            "field_112",
+            "field_113",
+            "field_114",
+            "field_115",
+            "field_116",
+            "field_117",
+            "field_118",
+            "field_119",
+            "field_120",
+            "field_121"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-90199503-f8b0-4db1-9a43-9e45ca0f84f9\",\"object\":\"chat.completion\",\"created\":1793445253,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"length\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":49,\"total_tokens\":50,\"completion_tokens\":1,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

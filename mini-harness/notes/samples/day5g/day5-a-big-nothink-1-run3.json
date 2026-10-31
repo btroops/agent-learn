@@ -1,0 +1,1603 @@
+{
+  "capturedAt": "2026-10-31T11:13:23.392Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "reasoning_effort": "none",
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "big_nothink_1",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "description": "cold-warm probe cold-a",
+          "properties": {
+            "field_001": {
+              "type": "string",
+              "enum": [
+                "x"
+              ]
+            }
+          },
+          "required": [
+            "field_001"
+          ],
+          "additionalProperties": false,
+          "$defs": {
+            "def_001": {
+              "type": "object",
+              "description": "schema-size filler cold-a #1：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_002": {
+              "type": "object",
+              "description": "schema-size filler cold-a #2：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_003": {
+              "type": "object",
+              "description": "schema-size filler cold-a #3：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_004": {
+              "type": "object",
+              "description": "schema-size filler cold-a #4：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_005": {
+              "type": "object",
+              "description": "schema-size filler cold-a #5：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_006": {
+              "type": "object",
+              "description": "schema-size filler cold-a #6：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_007": {
+              "type": "object",
+              "description": "schema-size filler cold-a #7：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_008": {
+              "type": "object",
+              "description": "schema-size filler cold-a #8：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_009": {
+              "type": "object",
+              "description": "schema-size filler cold-a #9：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_010": {
+              "type": "object",
+              "description": "schema-size filler cold-a #10：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_011": {
+              "type": "object",
+              "description": "schema-size filler cold-a #11：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_012": {
+              "type": "object",
+              "description": "schema-size filler cold-a #12：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_013": {
+              "type": "object",
+              "description": "schema-size filler cold-a #13：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_014": {
+              "type": "object",
+              "description": "schema-size filler cold-a #14：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_015": {
+              "type": "object",
+              "description": "schema-size filler cold-a #15：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_016": {
+              "type": "object",
+              "description": "schema-size filler cold-a #16：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_017": {
+              "type": "object",
+              "description": "schema-size filler cold-a #17：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_018": {
+              "type": "object",
+              "description": "schema-size filler cold-a #18：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_019": {
+              "type": "object",
+              "description": "schema-size filler cold-a #19：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_020": {
+              "type": "object",
+              "description": "schema-size filler cold-a #20：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_021": {
+              "type": "object",
+              "description": "schema-size filler cold-a #21：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_022": {
+              "type": "object",
+              "description": "schema-size filler cold-a #22：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_023": {
+              "type": "object",
+              "description": "schema-size filler cold-a #23：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_024": {
+              "type": "object",
+              "description": "schema-size filler cold-a #24：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_025": {
+              "type": "object",
+              "description": "schema-size filler cold-a #25：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_026": {
+              "type": "object",
+              "description": "schema-size filler cold-a #26：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_027": {
+              "type": "object",
+              "description": "schema-size filler cold-a #27：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_028": {
+              "type": "object",
+              "description": "schema-size filler cold-a #28：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_029": {
+              "type": "object",
+              "description": "schema-size filler cold-a #29：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_030": {
+              "type": "object",
+              "description": "schema-size filler cold-a #30：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_031": {
+              "type": "object",
+              "description": "schema-size filler cold-a #31：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_032": {
+              "type": "object",
+              "description": "schema-size filler cold-a #32：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_033": {
+              "type": "object",
+              "description": "schema-size filler cold-a #33：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_034": {
+              "type": "object",
+              "description": "schema-size filler cold-a #34：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_035": {
+              "type": "object",
+              "description": "schema-size filler cold-a #35：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_036": {
+              "type": "object",
+              "description": "schema-size filler cold-a #36：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_037": {
+              "type": "object",
+              "description": "schema-size filler cold-a #37：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_038": {
+              "type": "object",
+              "description": "schema-size filler cold-a #38：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_039": {
+              "type": "object",
+              "description": "schema-size filler cold-a #39：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_040": {
+              "type": "object",
+              "description": "schema-size filler cold-a #40：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_041": {
+              "type": "object",
+              "description": "schema-size filler cold-a #41：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_042": {
+              "type": "object",
+              "description": "schema-size filler cold-a #42：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_043": {
+              "type": "object",
+              "description": "schema-size filler cold-a #43：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_044": {
+              "type": "object",
+              "description": "schema-size filler cold-a #44：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_045": {
+              "type": "object",
+              "description": "schema-size filler cold-a #45：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_046": {
+              "type": "object",
+              "description": "schema-size filler cold-a #46：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_047": {
+              "type": "object",
+              "description": "schema-size filler cold-a #47：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_048": {
+              "type": "object",
+              "description": "schema-size filler cold-a #48：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_049": {
+              "type": "object",
+              "description": "schema-size filler cold-a #49：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_050": {
+              "type": "object",
+              "description": "schema-size filler cold-a #50：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_051": {
+              "type": "object",
+              "description": "schema-size filler cold-a #51：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_052": {
+              "type": "object",
+              "description": "schema-size filler cold-a #52：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_053": {
+              "type": "object",
+              "description": "schema-size filler cold-a #53：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_054": {
+              "type": "object",
+              "description": "schema-size filler cold-a #54：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_055": {
+              "type": "object",
+              "description": "schema-size filler cold-a #55：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_056": {
+              "type": "object",
+              "description": "schema-size filler cold-a #56：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_057": {
+              "type": "object",
+              "description": "schema-size filler cold-a #57：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_058": {
+              "type": "object",
+              "description": "schema-size filler cold-a #58：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_059": {
+              "type": "object",
+              "description": "schema-size filler cold-a #59：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_060": {
+              "type": "object",
+              "description": "schema-size filler cold-a #60：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_061": {
+              "type": "object",
+              "description": "schema-size filler cold-a #61：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_062": {
+              "type": "object",
+              "description": "schema-size filler cold-a #62：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_063": {
+              "type": "object",
+              "description": "schema-size filler cold-a #63：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_064": {
+              "type": "object",
+              "description": "schema-size filler cold-a #64：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_065": {
+              "type": "object",
+              "description": "schema-size filler cold-a #65：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_066": {
+              "type": "object",
+              "description": "schema-size filler cold-a #66：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_067": {
+              "type": "object",
+              "description": "schema-size filler cold-a #67：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_068": {
+              "type": "object",
+              "description": "schema-size filler cold-a #68：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_069": {
+              "type": "object",
+              "description": "schema-size filler cold-a #69：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_070": {
+              "type": "object",
+              "description": "schema-size filler cold-a #70：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_071": {
+              "type": "object",
+              "description": "schema-size filler cold-a #71：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_072": {
+              "type": "object",
+              "description": "schema-size filler cold-a #72：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_073": {
+              "type": "object",
+              "description": "schema-size filler cold-a #73：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_074": {
+              "type": "object",
+              "description": "schema-size filler cold-a #74：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_075": {
+              "type": "object",
+              "description": "schema-size filler cold-a #75：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_076": {
+              "type": "object",
+              "description": "schema-size filler cold-a #76：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_077": {
+              "type": "object",
+              "description": "schema-size filler cold-a #77：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_078": {
+              "type": "object",
+              "description": "schema-size filler cold-a #78：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_079": {
+              "type": "object",
+              "description": "schema-size filler cold-a #79：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_080": {
+              "type": "object",
+              "description": "schema-size filler cold-a #80：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_081": {
+              "type": "object",
+              "description": "schema-size filler cold-a #81：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_082": {
+              "type": "object",
+              "description": "schema-size filler cold-a #82：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_083": {
+              "type": "object",
+              "description": "schema-size filler cold-a #83：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_084": {
+              "type": "object",
+              "description": "schema-size filler cold-a #84：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_085": {
+              "type": "object",
+              "description": "schema-size filler cold-a #85：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_086": {
+              "type": "object",
+              "description": "schema-size filler cold-a #86：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_087": {
+              "type": "object",
+              "description": "schema-size filler cold-a #87：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_088": {
+              "type": "object",
+              "description": "schema-size filler cold-a #88：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_089": {
+              "type": "object",
+              "description": "schema-size filler cold-a #89：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_090": {
+              "type": "object",
+              "description": "schema-size filler cold-a #90：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_091": {
+              "type": "object",
+              "description": "schema-size filler cold-a #91：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_092": {
+              "type": "object",
+              "description": "schema-size filler cold-a #92：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_093": {
+              "type": "object",
+              "description": "schema-size filler cold-a #93：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_094": {
+              "type": "object",
+              "description": "schema-size filler cold-a #94：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_095": {
+              "type": "object",
+              "description": "schema-size filler cold-a #95：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_096": {
+              "type": "object",
+              "description": "schema-size filler cold-a #96：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_097": {
+              "type": "object",
+              "description": "schema-size filler cold-a #97：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_098": {
+              "type": "object",
+              "description": "schema-size filler cold-a #98：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_099": {
+              "type": "object",
+              "description": "schema-size filler cold-a #99：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_100": {
+              "type": "object",
+              "description": "schema-size filler cold-a #100：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_101": {
+              "type": "object",
+              "description": "schema-size filler cold-a #101：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_102": {
+              "type": "object",
+              "description": "schema-size filler cold-a #102：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_103": {
+              "type": "object",
+              "description": "schema-size filler cold-a #103：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_104": {
+              "type": "object",
+              "description": "schema-size filler cold-a #104：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_105": {
+              "type": "object",
+              "description": "schema-size filler cold-a #105：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_106": {
+              "type": "object",
+              "description": "schema-size filler cold-a #106：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_107": {
+              "type": "object",
+              "description": "schema-size filler cold-a #107：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_108": {
+              "type": "object",
+              "description": "schema-size filler cold-a #108：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_109": {
+              "type": "object",
+              "description": "schema-size filler cold-a #109：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_110": {
+              "type": "object",
+              "description": "schema-size filler cold-a #110：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_111": {
+              "type": "object",
+              "description": "schema-size filler cold-a #111：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_112": {
+              "type": "object",
+              "description": "schema-size filler cold-a #112：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_113": {
+              "type": "object",
+              "description": "schema-size filler cold-a #113：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_114": {
+              "type": "object",
+              "description": "schema-size filler cold-a #114：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_115": {
+              "type": "object",
+              "description": "schema-size filler cold-a #115：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_116": {
+              "type": "object",
+              "description": "schema-size filler cold-a #116：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_117": {
+              "type": "object",
+              "description": "schema-size filler cold-a #117：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_118": {
+              "type": "object",
+              "description": "schema-size filler cold-a #118：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_119": {
+              "type": "object",
+              "description": "schema-size filler cold-a #119：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            },
+            "def_120": {
+              "type": "object",
+              "description": "schema-size filler cold-a #120：只用于撑大 schema，不参与根对象输出。",
+              "properties": {
+                "v": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "v"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-1a157bed-76bf-4056-adf0-847a708130d4\",\"object\":\"chat.completion\",\"created\":1793445202,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"field_001\\\":\\\"x\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":49,\"total_tokens\":61,\"completion_tokens\":12,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}
