@@ -235,10 +235,10 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 |---|---|---|---|
 | 兼容性 | 本网关支持，但**不校验** OpenAI strict 限制 | 支持，指定函数名与 `"required"` 均生效 | 通用 |
 | 表达力 | JSON Schema 子集（嵌套/枚举/数值约束） | 同左（`parameters` 即 schema） | 受模型理解力限制 |
-| 强制力 | **语法级**（`minimum`、`required` 都被强制执行） | 同左 | 无 |
-| 100% 合法 JSON | 是 | 是 | 实测 3/3，但无保证 |
+| 强制力 | **语法级**（`minimum` / `maximum` / `enum` 实测生效） | **不强制**（同一份 `minimum` 被无视，见 5.5） | 无 |
+| 100% 合法 JSON | 是（语法层保证） | **无保证**：参数只是文本（实测 2/2 可解析） | 实测 3/3，但无保证 |
 | prompt token | 75（schema **不进 prompt**） | 451（+376 工具定义） | 198（+123 文字 schema） |
-| 失败形态 | 约束不可满足时**静默扭曲语义** | 同左 | 中文键 / 漏字段 / markdown |
+| 失败形态 | 约束不可满足时**静默扭曲语义** | 无视约束 / 参数可能不是合法 JSON | 中文键 / 漏字段 / markdown |
 
 ### 5.1 最反直觉的一条：强制力会骗人
 
@@ -252,12 +252,14 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 
 ### 5.2 不要拿 OpenAI 的 strict 文档推断网关行为
 
-`additionalProperties: true`、`minimum`、`required` 缺字段——这三种 OpenAI 明确拒绝的 schema，本网关全部返回 200。它只关心"能不能编译成语法"，不关心 OpenAI 的合规性检查。换供应商后本节的三个数字都要重测。
+`additionalProperties: true` 与 `required` 缺字段——这两种按 OpenAI strict 规则必然被拒，本网关全部返回 200。`minimum` 的封禁状态随版本变化：2024 首发时属于不支持关键字，2026 年外部资料称标准模型已支持、微调模型仍不支持（官方页未直读，标【待官方复核】）。
+
+本网关只关心"能不能编译成语法"，不关心 OpenAI 的合规性检查。但要注意证据强度：**200 只证明入口没做 strict 校验，不证明编译器如何解释被改坏的 schema**（A3 的输出"没多字段"就无法区分"允许但没加"和"不支持 true、按 false 处理"）。换供应商后本节的数字都要重测。
 
 ### 5.3 选型规则（本项目采用）
 
-1. **有副作用的动作 → B**（`tools` + `tool_choice`）：需要 `id`、需要执行、需要 `role:"tool"` 回填，这些 `json_schema` 给不了。
-2. **纯数据抽取 → A**（`json_schema`）：强制力最强，且本网关不把它算进 prompt token。
+1. **有副作用的动作 → B**（`tools` + `tool_choice`）：需要 `id`、需要执行、需要 `role:"tool"` 回填，这些 `json_schema` 给不了。代价是参数**不受语法强制**（见 5.5），执行前必须自己做校验。
+2. **纯数据抽取 → A**（`json_schema`）：强制力最强；带外 schema 不占 prompt token（外部资料显示 OpenAI 同样不计，不是本网关独有，见 devlog Day 5 §10.3）。
 3. **C 只作降级**：网关不支持 A/B 时用文字 schema + 客户端 `JSON.parse` + schema 校验，失败要重试，不能当成功。
 4. 无论哪条路径，**业务校验不能省**（见 5.1）。
 
@@ -266,3 +268,25 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 第一轮我把"纯 prompt 对照组"的 prompt 写成"只输出 JSON"，没给字段名，结果 3/3 产出中文键。看上去是"纯 prompt 不行"，实际上是**对照组根本没拿到同样的信息**。
 
 把 schema 用自然语言补进 prompt 重跑后，3/3 通过——结论完全反转。凡是"某方案不可靠"的结论，先检查是不是自己没给对方同样的输入。
+
+### 5.5 强制力看起来跟着通道走（有一个待排除的混淆变量）
+
+同一份 `minimum: 100`、同一句"预计 2 小时"，只改 schema 挂在哪：
+
+| 路径 | schema 位置 | prompt token | 输出 | 是否强制 |
+|---|---|---|---|---|
+| A `response_format` | 带外（编译成语法） | 75 | `205` | 是 |
+| B `tools[].function.parameters` | 带内（进 prompt） | 457 | `2` | **否** |
+
+决定性证据在两边的 `reasoning` 里：
+
+- **A 路径**：`字段名可用中文或英文？没指定` —— 模型**没看见** schema，字段名却是对的，说明约束作用在采样层。
+- **B 路径**：`The tool schema has duration_hours with minimum 100. That's odd — 2 hours would violate minimum... it would fail validation... I should attempt the call` —— 模型**看见了**约束，权衡之后**照样违反**。
+
+prompt token 也对得上：B 从 451 涨到 457，多出的正是 `minimum` 那几个 token；A 始终 75。
+
+在本组对比中：**`response_format` 里的 schema 是编译器输入，`tools` 里的 schema 只是说明书。** 用工具时，参数正确性没有任何服务端兜底，执行前必须自己按 schema 校验（这也解释了为什么 5.1 的"静默扭曲"只出现在 A 路径上）。这条结论的适用范围见下一段。
+
+**一个尚未排除的混淆变量**：B 路径的 `EMIT_TOOL` 没写 `function.strict: true`，而 A 路径是 `strict: true`。所以严格说这组对比是"strict 开 vs strict 没开"，不是"两个通道"。S4 只能支持"**没开 strict 的** tools 不强制"。要拆开必须补一个场景：`tools` + `function.strict:true` + `minimum:100` + 原文 2 小时——输出 `2` 则通道结论成立，输出 ≥100 则结论应改写为"strict 开关相关"。
+
+【待验证】B 路径的 `required` / `enum` 是否生效（只测了 `minimum`）；以及 B + `strict:true` 时 `minimum` 是否变为强制。两项都不能从现有样本推广。

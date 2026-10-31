@@ -213,9 +213,9 @@ type ChatCompletionTool = ChatCompletionFunctionTool | ChatCompletionCustomTool;
 
 结论：**schema 只约束模型的输出倾向，不保证运行时合法**。参数校验必须自己做（W3 用 zod / pydantic），校验失败要把错误信息回传给模型让它自我修正。
 
-**(5) `strict: true` 有两条硬约束，不满足直接 400。** **【文档】** 原文给的规则很具体，Day 5 会撞上：
+**(5) `strict: true` 不是"随便什么合法 JSON Schema 都能用"。** **【文档】** 规则很具体；Day 5 实测的是本网关**不检查**这些规则（见 devlog Day 5 §10）：
 
-1. `parameters` 里的**每个对象**都必须写 `"additionalProperties": false`
+1. `parameters` 里的**每个对象**都必须写 `"additionalProperties": false`（嵌套对象也要）
 2. `properties` 里的**所有字段**都必须进 `required`
 
 那"可选参数"怎么写？**不是不放进 required，而是把类型改成含 `null` 的联合**：
@@ -226,7 +226,17 @@ type ChatCompletionTool = ChatCompletionFunctionTool | ChatCompletionCustomTool;
 
 这条反直觉度很高：**JSON Schema 里常见的"可选"写法在 strict 模式下是非法的**，你必须在 required 里列出它、用 `null` 表达缺省。
 
-另外两个行为差异也要记住：
+其余硬约束（**【文档】+【外部资料，2026-10 复核】**）：
+
+- **不支持的关键字**：`allOf`、`not`、`if/then/else`、`dependentRequired`、`dependentSchemas`；`anyOf`、`$defs`/`$ref` 支持，但每个分支自身也得是合法 strict schema。
+- **根节点**：`response_format` 的根用 object；root 为 `anyOf` 不被支持。
+- **规模上限**：5000 个对象属性、10 层嵌套、1000 个枚举值、12 万字符（名称 + 枚举）。
+- **数值/字符串约束的封禁范围随版本变化**：2024 首发时 `minimum`/`maximum`/`multipleOf`/`minLength`/`maxLength` 均不支持；2026 年外部资料称标准模型已支持数值约束，**微调模型仍不支持**。官方页本次访问 403、未直读，标【待官方复核】。
+- **错误形态**：入口校验失败是 400，消息带上下文路径，如 `Invalid schema for response_format 'event': In context=(), 'additionalProperties' is required to be supplied and to be false.`；tools 通道是 `Invalid schema for function 'emit_event': ...`。
+- **两个例外会让"保证"失效**：`refusal` 非空、`finish_reason: "length"`。解析前先看这两个。
+- `strict` 也出现在 `response_format.json_schema.strict`，不只 tools。本项目 Day 5 的 B 路径**没写** `strict`，所以"tools 不强制"的结论带混淆变量（见 devlog Day 5 §10.2）。
+
+另外几个行为差异也要记住：
 
 - **Chat Completions 在不写 `strict` 时默认是"非严格"**；只有 Responses API 才会尝试自动规范化 schema。
 - **微调模型 + 单会话多次调用** → 严格模式会被**自动禁用**。
@@ -810,8 +820,8 @@ grep -n "export interface CompletionUsage" -A 30 package/resources/completions.d
 |---|---|---|---|
 | `stream_options.include_usage` | 流式请求加该字段，把原始 chunk 全打出来 | `[DONE]` 前出现 `choices: []` 且带 `usage` 的 chunk | Day 4 |
 | `obfuscation` | 同上，看每个 chunk 顶层有无 `obfuscation` | 有则该网关也开了防侧信道；没有则解析器可省一条"忽略未知字段"的兜底 | Day 4 |
-| `strict: true` | 带 `strict` 的工具 + 故意缺失 `additionalProperties` | 400 且错误信息点名缺哪条约束，才算"真支持" | Day 5 |
-| `response_format: json_schema` | 嵌套对象 + enum 的 schema | 返回体可直接 `JSON.parse` 且符合 schema | Day 5 |
+| `strict: true` | 带 `strict` 的工具 + 故意缺失 `additionalProperties` | 400 且错误信息点名缺哪条约束，才算"真支持" | **部分验（Day 5）**：只测了 `response_format` 通道，A3/A4 均 200 → 不校验；**tools + strict 仍未测**（B 路径没写 strict） |
+| `response_format: json_schema` | 嵌套对象 + enum 的 schema | 返回体可直接 `JSON.parse` 且符合 schema | **已验（Day 5 A1）**：通过；schema 不进 `prompt_tokens` |
 | `custom` 工具 | `type:"custom"` + `format:{type:"text"}` | 响应 `tool_calls[].custom.input` 是纯文本，或明确 400 | Day 5（顺带） |
 | `tool_choice.allowed_tools` | 传两个工具、只允许一个 | 模型不会调用被排除的那个；若报 400 则记"不支持" | Day 5（顺带） |
 | `grammar` 子集 | 不在本仓库验证范围内 | — | 不排期 |

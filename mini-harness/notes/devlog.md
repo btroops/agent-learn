@@ -375,7 +375,7 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 ### 3. 三个实质发现
 
-**① 这个网关真的在做语法级强制解码（guided decoding），而不只是"建议"。**
+**① 这个网关在 `response_format` 通道上真的在做语法级强制解码（guided decoding），而不只是"建议"。**（`tools` 通道不强制，见 §9；该结论受"B 没开 strict"影响，见 §10.2）
 
 证据有两处：
 
@@ -386,9 +386,13 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 **② 但它不校验 OpenAI 的 strict 模式限制。** `additionalProperties: true`、`minimum`、`required` 缺字段，三种 OpenAI 明确会拒绝的 schema，这里全部 200。换句话说：**不要拿 OpenAI 的 strict 文档来推断这个网关的行为**，它只关心能不能编译成语法。
 
+> **2026-10-31 复核**：`minimum` 的封禁状态随版本与模型类型变化，并非永久结论（见 §10.1）；另外"tools 通道不校验 strict"**未验证**，因为 B 路径根本没写 `strict`（见 §10.2）。
+
 **③ schema 不计入 prompt_tokens（本网关特有）。** 同一任务：A 组 75 tokens，C2 组 198（+123 是文字 schema），B 组 451（+376 是工具定义）。
 
 也就是说 A 的 schema 走的是"带外"通道（编译成 grammar），一次复杂 schema 在 A 里是**零 prompt 成本**。这与 OpenAI 官方（会把 schema 序列化进 prompt 计费）不同，属于网关实现差异，换供应商后这个结论必须重测。
+
+> **2026-10-31 复核（不改上文）**：后半句"OpenAI 会把 schema 序列化进 prompt 计费"不成立——外部资料显示 OpenAI 同样不计 schema token，见 §10.3。零 prompt 成本是 guided decoding 的共性，不是本网关独有。
 
 ### 4. 三列对比表
 
@@ -396,11 +400,13 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 |---|---|---|---|
 | 兼容性 | 本网关支持；但**不校验** strict 限制（A2/A3/A4 全 200） | 支持；指定函数名与 `"required"` 都生效 | 任何网关可用 |
 | schema 表达力 | 完整 JSON Schema 子集（嵌套/枚举/数值约束） | 同左（`parameters` 就是 JSON Schema） | 受模型理解力限制 |
-| 强制力 | **语法级**：`minimum` 与 `required` 都被强制执行 | 同左 | 无，只能事后校验 |
+| 强制力 | **语法级**：`minimum` / `maximum` / `enum` 实测生效 | **不强制**：同一份 `minimum` 被无视（见 §9 S4） | 无，只能事后校验 |
 | 是否 100% 合法 JSON | 是（语法层保证） | 是（语法层保证） | 实测 3/3 通过，但无任何保证 |
 | prompt token（本任务） | 75（schema 不进 prompt） | 451（工具定义 +376） | 198（文字 schema +123） |
 | 失败形态 | 约束不可满足时**静默扭曲语义**（2 小时 → 205 小时） | 同 A | 中文键 / 漏字段 / markdown 包裹 |
 | 语义错误的可发现性 | 低（校验全绿，但值是错的） | 低（同左） | 高（经常直接校验失败） |
+
+> **2026-10-31 复核**：上表 B 列的"100% 合法 JSON = 是（语法层保证）"、"失败形态 = 同 A"、"语义错误可发现性 = 低"三行沿用旧口径，已被 §9 S4 推翻——B 没开 `strict`，参数只是文本，没有语法保证；它不是"为满足约束而扭曲"，而是可能直接无视约束或产出不合法 JSON（客户端校验能发现，故可发现性应为高）。以 §10.2 为准。
 
 ### 5. 什么时候必须用 `tool_choice` 而不用 `json_schema`
 
@@ -446,3 +452,96 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 - **"205 会被更严的校验挡住"这个假设不成立。** `205 ≥ 100`，任何正确的校验器都会放行。所以 5.1 的结论要说得更硬：这类错误**只能靠业务校验**发现，schema 层再怎么加严都拦不住。
 
 教训：`schema 校验=通过/失败` 这一列，只有在"校验器实现了该 schema 的全部关键字"且"校验的是实际发出的那份 schema"时才成立，否则它只是个装饰性字段——我自己就先被它误导了一轮。
+
+### 9. 第三轮：真实接口补充实验（2026-10-31，4 次请求）
+
+判据在跑之前先定好，样本落 `samples/day5b/`（文件名仍是 `day5-*` 前缀，脚本里写死）。这一轮有一处**推翻了第 4 节的表格**。
+
+| 场景 | 约束 | 输出 | 解读 |
+|---|---|---|---|
+| S1 `maximum:1`（原文 2 小时） | `duration_hours <= 1` | `1` | 约束**双向**生效，2 被压到边界值 |
+| S2 `enum:["low"]`（原文"优先级高"） | `priority ∈ {low}` | `"low"` | 枚举生效，静默改值 |
+| S3 `minimum:100` + 原文"200 小时" | `>= 100` | `200` | 控制组：语义与约束不冲突时不扭曲 |
+| S4 **B 路径** `minimum:100` | `>= 100` | **`2`** | **未生效**，本地校验直接判失败 |
+
+两条结论：
+
+1. **A2b 的 205 不是"模型爱编大数"。** S3 把原文改成"200 小时"后输出就是 `200`，说明模型读得懂数值；205 是"2 不合法、只能往上凑"的产物。加上 S1/S2，A 路径的 `minimum` / `maximum` / `enum` 三个关键字全部实测生效。
+2. **强制力是通道相关的，不是 schema 相关的。** 同一份 `minimum:100`，A 输出 205（被顶住），B 输出 2（无视）。S4 的 reasoning 里模型自己写着"minimum 100 与 2 小时冲突……它应该会校验失败……我还是调一下试试"——**它看见了约束，然后选择违反它**。反过来 A 路径的 reasoning 是"字段名可用中文还是英文？没指定"——**模型压根没看见 schema**。prompt token 也印证：B 从 451 涨到 457，多出的正是 `minimum` 那几个 token。
+
+因此第 4 节"强制力"一行，B 列由"同左"改为"**不强制**"。B 的 `required` / `enum` 是否生效**未测**，不能推广。
+
+> **2026-10-31 复核（结论待拆）**：`EMIT_TOOL` 没有 `function.strict: true`，而 A 路径是 `strict: true`。所以这组对比实际是"strict 开 vs strict 没开"，"通道相关"可能只是"strict 开关相关"。拆解实验见 §10.2。
+
+**一处需要打问号的观测**：S2 同时出现了与约束无关的漂移——`owner` 从"张三"变成"李四"，`start_time` 变成编造的绝对日期（reasoning 里还臆造了"系统日期 2026-05-07"）。单次观测无法判断这是采样噪声还是约束冲突的副作用，**未计入结论**；要归因得重复跑。
+
+对 W3 的直接影响：**用 `tools` 定义工具时，参数正确性不能指望网关**。注册表里的 schema 是"给模型看的说明书"，不是服务端的校验器；执行前必须自己按同一份 schema 校验，否则 `get_weather({"city": 2})` 这类调用会直接打到工具实现里。
+
+### 10. 2026-10-31 复核：strict 的真实规则、A 组判别力、一处事实更正
+
+本节不改前面已归档的观测与数字，只补口径；凡是推翻前文的，都在原文处留了指针。
+
+#### 10.1 OpenAI strict 到底要求什么
+
+**【文档】+【外部资料，2026-10 复核；官方页 403 未直读】**：
+
+| 规则 | 内容 |
+|---|---|
+| 对象 | 每个 `object` 节点都**显式**写 `additionalProperties: false`，嵌套对象同样 |
+| 必填 | 所有 `properties` 必须全部进 `required`；可选字段只能写成含 `null` 的联合 |
+| 不支持关键字 | `allOf`、`not`、`if/then/else`、`dependentRequired`、`dependentSchemas`；`anyOf`、`$defs/$ref` 支持，但每个分支自身也要合法 |
+| 根节点 | `response_format` 的根用 object；root 为 `anyOf` 不被支持 |
+| 规模上限 | 5000 个属性、10 层嵌套、1000 个枚举值、12 万字符 |
+
+入口拒绝形态是 400，消息通常带上下文路径（历史文档形态）：
+
+```
+Invalid schema for response_format 'event': In context=(), 'additionalProperties' is required to be supplied and to be false.
+```
+
+tools 通道对应 `Invalid schema for function 'emit_event': ...`。
+
+**时效性**：`minimum`/`maximum`/`multipleOf`/`minLength`/`maxLength` 在 2024 首发时属于不支持关键字；2026 年外部资料称标准模型已支持数值约束、微调模型仍不支持。官方文档本次无法直接访问，所以第 3 节"三种 OpenAI 明确会拒绝的 schema"只有 `additionalProperties: true` 与 `required` 缺字段两项站得住，`minimum` 要按"版本 + 模型类型"标注，不能当永久结论。
+
+**两阶段模型**（本次讨论的固定结论）：
+
+| 阶段 | 做什么 | 失败表现 |
+|---|---|---|
+| 入口 strict 校验 | 静态检查 schema 是否符合 OpenAI 元规则 | 400，请求不进入推理 |
+| 编译器编译 | 把 schema 编译成语法/FSM 供 guided decoding 使用 | 可能报错、回退或按支持的子集弱化，不一定报错 |
+
+A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶段怎么处理被改坏的 schema，需要看输出证据（见 10.2）。
+
+#### 10.2 A 组判别力分级
+
+| 场景 | 能证明 | 不能证明 |
+|---|---|---|
+| A1 | 正常 schema 可用、输出合法 | 任何强制力 |
+| A2 `minimum:0` | 入口不拒该 schema | `minimum` 是否执行（`2 ≥ 0` 恒真） |
+| A3 `additionalProperties:true` | 入口不拒 | 编译器是否接受 `true`；"输出没多字段"无法区分"允许但没加"与"按 false 处理" |
+| A4 去掉 `owner` | `required` 被执行 + 入口不校验 strict（输出真的没有 owner） | 单次样本；建议重复 3 次加固 |
+| A2b `minimum:100` | 数值约束被执行 + 约束冲突时静默扭曲语义 | — |
+| A5 `json_object` | 只保证 JSON 语法 | 不能当"纯 prompt 不行"的基线（prompt 未给字段名） |
+| A5b | 文字 schema 能补位；成本 +123 token | — |
+
+**容易过度的推断**："A3 返回 200 就说明编译器把 `additionalProperties: true` 编译成了允许额外键"——不成立。模型本就没有理由添加额外键，所以输出"没有多余字段"无法区分"允许但没加"与"不支持 true、按 false 处理"。
+
+**B 路径的混淆变量（比 A3 更要紧）**：`EMIT_TOOL` 没有 `function.strict: true`，A 路径却是 `strict: true`。§9 的对比实际是"strict 开 vs 没开"，不是"两个通道"；S4 只能支持"**没开 strict 的** tools 不强制"。补两个场景即可拆开：
+
+| 待补场景 | 请求 | 判定 |
+|---|---|---|
+| B + strict | `tools:[EMIT_TOOL]`，`function.strict:true`，`minimum:100`，原文"2 小时" | 输出 `2` → 通道结论成立；输出 ≥100 → 结论改为"strict 开关相关" |
+| tools 入口校验 | 同上但 `parameters` 故意缺 `additionalProperties` | 400 → 网关对 tools 也做 strict 校验；200 → 不做 |
+
+#### 10.3 更正：OpenAI 也不把 schema 计入 prompt_tokens
+
+§3 ③ 原文说"OpenAI 会把 schema 序列化进 prompt 计费，所以零 prompt 成本是本网关特有"。**这条不成立**：
+
+- 2024-08 的公开实验（gpt-4o-mini，固定 prompt，未在本仓库存档）：schema 字段越加越多，`prompt_tokens` 恒定 18，说明 schema 不在计费上下文里；
+- 2026 年外部资料同样写"no extra token cost，只多一次编译延迟（约 200–400ms，之后缓存）"。
+
+所以 A 组 75 vs C2 组 198 的正确解读是：**带外 schema 不占 prompt token，这是 guided decoding 实现的共性，不是本网关独有**。真正的网关差异在 strict 校验与关键字支持范围。以上均为外部资料、未在本仓库自测，换供应商不适用。
+
+#### 10.4 对 W3 的影响（不变，但理由更硬）
+
+工具参数的运行时校验仍然必须做：即使网关将来支持 strict，strict 也只保证结构与类型，不保证值正确（A2b 的 `205` 已经证明语法层会为满足约束而扭曲语义）。另外 strict 的保证还有两个缺口——`refusal` 与 `finish_reason: "length"`，harness 解析前必须先检查。
