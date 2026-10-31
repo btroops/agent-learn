@@ -84,6 +84,30 @@ const EMIT_TOOL_MIN = {
   },
 };
 
+/** P0-1：与 S4 相同的 schema，但显式开 strict，用来拆分"通道"与"strict 开关" */
+const EMIT_TOOL_STRICT_MIN = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL_MIN.function,
+    strict: true,
+  },
+};
+
+/** P0-2：strict:true 但 parameters 缺 additionalProperties，探测入口是否按 OpenAI 规则校验 */
+const EMIT_TOOL_STRICT_BAD = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_bad",
+    description: "故意缺少 additionalProperties，用于探测 strict 入口校验",
+    strict: true,
+    parameters: {
+      type: "object",
+      properties: { title: { type: "string" } },
+      required: ["title"],
+    },
+  },
+};
+
 /** 把同一份 schema 用自然语言完整描述出来，用于"没有 response_format 时"的公平对照 */
 const SCHEMA_TEXT = `JSON 必须严格符合以下结构：
 {
@@ -272,6 +296,23 @@ const scenarios: Scenario[] = [
     id: "b-tool-minimum",
     label: "S4 tool_choice + parameters 里 minimum:100（验证强制力是否与通道无关）",
     body: { tools: [EMIT_TOOL_MIN], tool_choice: { type: "function", function: { name: "emit_event" } } },
+  },
+  // ---- P0：拆分"通道"与"strict 开关"（2026-10-31） ----
+  {
+    id: "b-strict-minimum",
+    label: "P0-1 tool + strict:true + minimum:100（strict 下是否强制）",
+    body: {
+      tools: [EMIT_TOOL_STRICT_MIN],
+      tool_choice: { type: "function", function: { name: "emit_event" } },
+    },
+  },
+  {
+    id: "b-strict-invalid",
+    label: "P0-2 tool + strict:true 但缺 additionalProperties（探测入口校验）",
+    body: {
+      tools: [EMIT_TOOL_STRICT_BAD],
+      tool_choice: { type: "function", function: { name: "emit_event_bad" } },
+    },
   },
 ];
 
