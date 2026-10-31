@@ -33,6 +33,9 @@ function env(): { api: string; apiKey: string; model: string } {
 /** 同一句话，三条路径共用：同 prompt 才能比 token */
 const TASK = "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。";
 
+/** S3 控制组：语义与 minimum:100 方向一致，用来排除「模型对时长本来就倾向给大数」 */
+const TASK_200 = "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 200 小时，负责人张三，优先级高。";
+
 /** 带嵌套对象 + 枚举的严格 schema */
 const EVENT_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -66,6 +69,18 @@ const EMIT_TOOL = {
     name: "emit_event",
     description: "把会议信息转成结构化事件对象",
     parameters: EVENT_SCHEMA,
+  },
+};
+
+/** S4：同一个工具，只在 parameters 里加 minimum，验证强制力是否与通道无关 */
+const EMIT_TOOL_MIN = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL.function,
+    parameters: mutated((s) => {
+      const props = s.properties as Record<string, Record<string, unknown>>;
+      props.duration_hours.minimum = 100;
+    }),
   },
 };
 
@@ -199,6 +214,64 @@ const scenarios: Scenario[] = [
         },
       },
     },
+  },
+  // ---- 第三轮：真实接口补充实验（2026-10-31），判据见 devlog ----
+  {
+    id: "a-maximum-1",
+    label: "S1 json_schema + maximum:1（原文 2 小时，探测约束是否双向）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.duration_hours.maximum = 1;
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "a-enum-conflict",
+    label: "S2 json_schema + priority enum 收窄为 [low]（原文「优先级高」）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.priority.enum = ["low"];
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "a-minimum-100-consistent",
+    label: "S3 json_schema + minimum:100 且原文「预计 200 小时」（控制组）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event",
+          strict: true,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.duration_hours.minimum = 100;
+          }),
+        },
+      },
+    },
+    prompt: `${TASK_200}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+  },
+  {
+    id: "b-tool-minimum",
+    label: "S4 tool_choice + parameters 里 minimum:100（验证强制力是否与通道无关）",
+    body: { tools: [EMIT_TOOL_MIN], tool_choice: { type: "function", function: { name: "emit_event" } } },
   },
 ];
 
