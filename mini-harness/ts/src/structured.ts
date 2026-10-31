@@ -702,6 +702,10 @@ interface Observation {
   schemaErrors?: string[];
   usage?: Record<string, unknown>;
   sortedKeys?: string[];
+  /** 终止原因：stop / length / tool_calls ...；截断时不能 parse */
+  finishReason?: string;
+  /** 标准 refusal 字段；本网关实测恒 null，拒答落在 content */
+  refusal?: string | null;
 }
 
 async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
@@ -776,14 +780,20 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
 
   const body = JSON.parse(text) as {
     choices?: {
-      message?: { content?: string | null; tool_calls?: { function?: { arguments?: string } }[] };
+      message?: {
+        content?: string | null;
+        tool_calls?: { function?: { arguments?: string } }[];
+        refusal?: string | null;
+      };
       finish_reason?: string;
     }[];
     usage?: Record<string, unknown>;
   };
   obs.usage = body.usage;
+  obs.finishReason = body.choices?.[0]?.finish_reason;
 
   const message = body.choices?.[0]?.message;
+  obs.refusal = message?.refusal ?? null;
   const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
 
   if (typeof toolArgs === "string") {
@@ -916,6 +926,8 @@ async function main(): Promise<void> {
     console.log(
       `${obs.scenario}#${obs.run}`.padEnd(26),
       `status=${obs.status}`,
+      `finish=${obs.finishReason ?? "-"}`,
+      `refusal=${obs.refusal ?? "-"}`,
       `schema=${ok ? "OK" : "FAIL"}`,
       `pt/ct=${usage?.prompt_tokens ?? "-"}/${usage?.completion_tokens ?? "-"}`,
       `${obs.elapsedMs}ms`,
