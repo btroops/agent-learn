@@ -362,7 +362,7 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 | A1 `json_schema`（嵌套 + 枚举） | 200 | 通过 | 75 / 169 | 完全符合 schema |
 | A2 `+ minimum:0` | 200 | 通过 | 75 / 266 | **没被拒**，与 OpenAI strict 行为不同 |
 | A3 `+ additionalProperties:true` | 200 | 通过 | 75 / 187 | **没被拒** |
-| A4 `required` 里去掉 `owner` | 200 | 失败（缺 owner） | 75 / 172 | **输出真的没有 owner** |
+| A4 `required` 里去掉 `owner` | 200 | 通过¹ | 75 / 172 | **输出真的没有 owner** |
 | A5 `json_object`（无文字 schema） | 200 | 失败（中文键） | 75 / 163 | 只保证是 JSON，不保证结构 |
 | A5b `json_object` + 文字 schema | 200 | 通过 | 198 / 212 | 补齐 schema 描述后可用 |
 | B1 `tool_choice` 指定函数名 | 200 | 通过 | 451 / 295 | 参数在 `tool_calls[0].arguments` |
@@ -370,6 +370,8 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 | C 纯 prompt（无字段名） | 200×3 | 3/3 失败 | 75 / 209,232,242 | 中文键，设计缺陷组 |
 | C2 纯 prompt + 文字 schema | 200×3 | **3/3 通过** | 198 / 245,229,248 | 修正后的公平基线 |
 | A2b `+ minimum:100` | 200 | 通过 | 75 / 216 | **`duration_hours` 输出了 205** |
+
+> ¹ 原先记为"失败（缺 owner）"，是**校验用错 schema** 所致：本场景实际发出的 schema 里 `required` 已不含 `owner`，输出少该字段完全合规。`205` 同理——它满足 `minimum: 100`，本来就合法。两处口径问题与离线复验见本节末尾「补充实验」。
 
 ### 3. 三个实质发现
 
@@ -420,3 +422,27 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 - [ ] Day 6：故障样本（429 / 5xx / 断连 / 超时）
 - [ ] 换供应商（或网关升级）后重测第 3 节的三条结论，尤其是"schema 不计 prompt token"
+
+### 8. 补充实验：校验口径的离线复验（2026-10-31，0 次请求）
+
+用 `node ts/src/structured.ts --revalidate=notes/samples/day5` 重算 15 份样本，发现第 2 节那张表的"schema 校验"列有两处口径问题：
+
+1. **校验用错了 schema。** `runOnce` 里写死 `validate(parsed, EVENT_SCHEMA)`，而 A2 / A2b / A3 / A4 发出的都是 EVENT_SCHEMA 的变体。拿原件去校验变体，等于换了一把尺子。
+2. **校验器不实现数值约束。** `validate()` 的 number 分支只查 `typeof`，`minimum` / `maximum` 形同不存在。
+
+两处都已修：新增 `sentSchema(requestBody)` 从样本的 `requestBody` 反推该场景实际发出的那份 schema；`validate()` 补上 `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` 与 `integer`。同时加 `--revalidate=<dir>` 模式，不读 `.env`、不发请求。
+
+复验结果（旧口径 10/15 通过，新口径 11/15）：
+
+| 样本 | 旧口径（EVENT_SCHEMA） | 新口径（实际发出的 schema） |
+|---|---|---|
+| `a-missing-required` | 失败：`$.owner` 缺失 | **通过** ← 唯一翻转 |
+| `a-minimum-100` | 通过 | 通过（`205 ≥ 100`） |
+| 其余 13 份 | 同 | 同 |
+
+两条结论：
+
+- **A4 的"失败"是假象。** 该场景的 schema 本就不要求 `owner`，输出没有 `owner` 完全合规——这反而是 `required` 被执行的最强证据：模型没有"顺手多写一个本来不要的字段"。第 2 节该行已改为"通过"。
+- **"205 会被更严的校验挡住"这个假设不成立。** `205 ≥ 100`，任何正确的校验器都会放行。所以 5.1 的结论要说得更硬：这类错误**只能靠业务校验**发现，schema 层再怎么加严都拦不住。
+
+教训：`schema 校验=通过/失败` 这一列，只有在"校验器实现了该 schema 的全部关键字"且"校验的是实际发出的那份 schema"时才成立，否则它只是个装饰性字段——我自己就先被它误导了一轮。

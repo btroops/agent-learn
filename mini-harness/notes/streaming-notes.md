@@ -248,6 +248,8 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 
 推论：**schema 校验通过 ≠ 数据正确**。任何"看起来结构完美"的输出都必须再过一遍业务校验（范围、单位、与原文的一致性）。
 
+补一刀（Day 5 离线复验）：`205` 满足 `minimum: 100`，**任何正确的 schema 校验器都会放行它**。所以这类错误在 schema 层无论怎么加严都拦不住，只能靠"与原文比对"这类业务规则发现。
+
 ### 5.2 不要拿 OpenAI 的 strict 文档推断网关行为
 
 `additionalProperties: true`、`minimum`、`required` 缺字段——这三种 OpenAI 明确拒绝的 schema，本网关全部返回 200。它只关心"能不能编译成语法"，不关心 OpenAI 的合规性检查。换供应商后本节的三个数字都要重测。
