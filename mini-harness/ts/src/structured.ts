@@ -12,18 +12,23 @@
  *   node --env-file=../.env src/structured.ts --only=a-json-schema
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
-const baseUrl = process.env.LLM_BASE_URL;
-const apiKey = process.env.LLM_API_KEY;
-const model = process.env.LLM_MODEL;
-if (!baseUrl || !apiKey || !model) throw new Error("缺少 LLM_BASE_URL / LLM_API_KEY / LLM_MODEL");
-
-const api = baseUrl.replace(/\/+$/, "");
 const args = process.argv.slice(2);
 const only = args.find((a) => a.startsWith("--only="))?.slice("--only=".length);
 const saveDir = args.find((a) => a.startsWith("--save-dir="))?.slice("--save-dir=".length);
+/** 离线复验：不读 .env、不发请求，只拿已落盘样本重算校验结论 */
+const revalidateDir = args.find((a) => a.startsWith("--revalidate="))?.slice("--revalidate=".length);
+
+/** 只有联网场景才需要环境变量；离线复验不该被缺失的 .env 拦住 */
+function env(): { api: string; apiKey: string; model: string } {
+  const baseUrl = process.env.LLM_BASE_URL;
+  const apiKey = process.env.LLM_API_KEY;
+  const model = process.env.LLM_MODEL;
+  if (!baseUrl || !apiKey || !model) throw new Error("缺少 LLM_BASE_URL / LLM_API_KEY / LLM_MODEL");
+  return { api: baseUrl.replace(/\/+$/, ""), apiKey, model };
+}
 
 /** 同一句话，三条路径共用：同 prompt 才能比 token */
 const TASK = "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。";
@@ -199,6 +204,24 @@ const scenarios: Scenario[] = [
 
 // ---------- 最小 JSON Schema 校验器（够这次实验用） ----------
 
+/**
+ * 还原"这个请求实际发出去的那份 schema"。
+ *
+ * A 在 response_format 里，B 在 tools[0].function.parameters 里，C 压根没发（只能拿 EVENT_SCHEMA 充当意图）。
+ * 之前统一用 EVENT_SCHEMA 校验是错的：A2/A2b/A3/A4 都是它的变体，用原件校验等于换了一把尺子。
+ */
+function sentSchema(body: Record<string, unknown>): Record<string, unknown> {
+  const responseFormat = body.response_format as { json_schema?: { schema?: Record<string, unknown> } } | undefined;
+  const fromFormat = responseFormat?.json_schema?.schema;
+  if (fromFormat) return fromFormat;
+
+  const tools = body.tools as { function?: { parameters?: Record<string, unknown> } }[] | undefined;
+  const fromTools = tools?.[0]?.function?.parameters;
+  if (fromTools) return fromTools;
+
+  return EVENT_SCHEMA;
+}
+
 function validate(value: unknown, schema: Record<string, unknown>, path = "$"): string[] {
   const errors: string[] = [];
   const type = schema.type as string | undefined;
@@ -222,8 +245,24 @@ function validate(value: unknown, schema: Record<string, unknown>, path = "$"): 
     else if (Array.isArray(schema.enum) && !(schema.enum as unknown[]).includes(value)) {
       errors.push(`${path} 不在枚举 ${JSON.stringify(schema.enum)} 内`);
     }
-  } else if (type === "number") {
-    if (typeof value !== "number") errors.push(`${path} 不是 number`);
+  } else if (type === "number" || type === "integer") {
+    if (typeof value !== "number") errors.push(`${path} 不是 ${type}`);
+    else {
+      if (type === "integer" && !Number.isInteger(value)) errors.push(`${path} ${value} 不是整数`);
+      // 数值约束必须查：只查 typeof 时，minimum:100 形同不存在（205 与 2 都会"通过"）
+      const min = schema.minimum;
+      const max = schema.maximum;
+      const exclusiveMin = schema.exclusiveMinimum;
+      const exclusiveMax = schema.exclusiveMaximum;
+      if (typeof min === "number" && value < min) errors.push(`${path} ${value} < minimum ${min}`);
+      if (typeof max === "number" && value > max) errors.push(`${path} ${value} > maximum ${max}`);
+      if (typeof exclusiveMin === "number" && value <= exclusiveMin) {
+        errors.push(`${path} ${value} <= exclusiveMinimum ${exclusiveMin}`);
+      }
+      if (typeof exclusiveMax === "number" && value >= exclusiveMax) {
+        errors.push(`${path} ${value} >= exclusiveMaximum ${exclusiveMax}`);
+      }
+    }
   } else if (type === "boolean") {
     if (typeof value !== "boolean") errors.push(`${path} 不是 boolean`);
   }
@@ -247,6 +286,8 @@ interface Observation {
 }
 
 async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
+  const { api, apiKey, model } = env();
+
   const prompt =
     scenario.prompt ??
     (scenario.body.tools
@@ -318,7 +359,8 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
   if (obs.jsonText !== undefined) {
     try {
       obs.parsed = JSON.parse(obs.jsonText);
-      obs.schemaErrors = validate(obs.parsed, EVENT_SCHEMA);
+      // 用本场景实际发出的 schema 校验，不要用 EVENT_SCHEMA 原件
+      obs.schemaErrors = validate(obs.parsed, sentSchema(requestBody));
       obs.sortedKeys = Object.keys(obs.parsed as object);
     } catch (error) {
       obs.schemaErrors = [`JSON 解析失败：${(error as Error).message}`];
@@ -330,7 +372,78 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
   return obs;
 }
 
+// ---------- 离线复验：用已落盘样本重算校验结论（0 次请求） ----------
+
+interface RevalidateRow {
+  file: string;
+  ok: boolean;
+  oldOk: boolean;
+  errors: string[];
+  oldErrors: string[];
+}
+
+async function revalidate(dir: string): Promise<void> {
+  const files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
+  if (files.length === 0) throw new Error(`目录里没有样本：${dir}`);
+
+  const rows: RevalidateRow[] = [];
+  for (const file of files) {
+    const sample = JSON.parse(await readFile(join(dir, file), "utf8")) as {
+      requestBody: Record<string, unknown>;
+      raw: string;
+    };
+    const body = JSON.parse(sample.raw) as {
+      choices?: { message?: { content?: string | null; tool_calls?: { function?: { arguments?: string } }[] } }[];
+    };
+    const message = body.choices?.[0]?.message;
+    const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
+    const text =
+      typeof toolArgs === "string"
+        ? toolArgs
+        : typeof message?.content === "string"
+          ? message.content.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "")
+          : undefined;
+
+    if (text === undefined) {
+      rows.push({ file, ok: false, oldOk: false, errors: ["没有 content / tool_calls.arguments"], oldErrors: [] });
+      continue;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch (error) {
+      const reason = `JSON 解析失败：${(error as Error).message}`;
+      rows.push({ file, ok: false, oldOk: false, errors: [reason], oldErrors: [reason] });
+      continue;
+    }
+
+    // 旧口径刻意保留：用 EVENT_SCHEMA 原件 + 不含数值约束的老规则，用来对照
+    const errors = validate(parsed, sentSchema(sample.requestBody));
+    const oldErrors = validate(parsed, EVENT_SCHEMA);
+    rows.push({ file, ok: errors.length === 0, oldOk: oldErrors.length === 0, errors, oldErrors });
+  }
+
+  console.log(`=== 离线复验 ${dir}（${rows.length} 份样本，0 次请求）===\n`);
+  for (const row of rows) {
+    console.log(`${row.ok === row.oldOk ? "[同]" : "[变]"} ${row.file}`);
+    console.log(`     旧口径 EVENT_SCHEMA = ${row.oldOk ? "通过" : `失败: ${row.oldErrors.join("; ")}`}`);
+    console.log(`     新口径 实际 schema  = ${row.ok ? "通过" : `失败: ${row.errors.join("; ")}`}`);
+  }
+
+  const flipped = rows.filter((r) => r.ok !== r.oldOk);
+  console.log(`\n判定翻转 ${flipped.length} 份：${flipped.map((r) => r.file).join(", ") || "无"}`);
+  console.log(
+    `通过率：旧口径 ${rows.filter((r) => r.oldOk).length}/${rows.length}，新口径 ${rows.filter((r) => r.ok).length}/${rows.length}`,
+  );
+}
+
 async function main(): Promise<void> {
+  if (revalidateDir) {
+    await revalidate(revalidateDir);
+    return;
+  }
+
   const wanted = only?.split(",").map((s) => s.trim()).filter(Boolean);
   const selected = wanted ? scenarios.filter((s) => wanted.includes(s.id)) : scenarios;
   if (selected.length === 0) throw new Error(`没有匹配的场景：${only}`);
