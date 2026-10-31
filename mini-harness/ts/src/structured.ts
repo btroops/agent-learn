@@ -56,6 +56,29 @@ const EVENT_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
 };
 
+/**
+ * 2×2 对照用的 hard schema：嵌套 address 必填、6 值枚举里没有原文的 "high"、
+ * duration_hours 下限 100 与原文"2 小时"冲突。用来放大"文字说明"与"语法强制"的差异。
+ */
+const HARD_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    location: {
+      type: "object",
+      properties: { city: { type: "string" }, district: { type: "string" }, address: { type: "string" } },
+      required: ["city", "district", "address"],
+      additionalProperties: false,
+    },
+    start_time: { type: "string" },
+    duration_hours: { type: "number", minimum: 100 },
+    priority: { type: "string", enum: ["low", "medium", "deferred", "blocked", "cancelled", "unknown"] },
+    owner: { type: "string" },
+  },
+  required: ["title", "location", "start_time", "duration_hours", "priority", "owner"],
+  additionalProperties: false,
+};
+
 /** 在严格 schema 的副本上做一处破坏，用来探测网关会不会拒绝 */
 function mutated(patch: (schema: Record<string, unknown>) => void): Record<string, unknown> {
   const copy = JSON.parse(JSON.stringify(EVENT_SCHEMA)) as Record<string, unknown>;
@@ -186,6 +209,18 @@ const SCHEMA_TEXT = `JSON 必须严格符合以下结构：
 }
 所有字段必填，不允许出现上面未列出的字段。`;
 
+/** HARD_SCHEMA 的文字版：信息量对齐，但没有任何服务端强制 */
+const HARD_SCHEMA_TEXT = `JSON 必须严格符合以下结构：
+{
+  "title": string,
+  "location": { "city": string, "district": string, "address": string },  // 三个子字段都必填
+  "start_time": string,
+  "duration_hours": number,                // 必须 >= 100
+  "priority": "low" | "medium" | "deferred" | "blocked" | "cancelled" | "unknown",
+  "owner": string
+}
+所有字段必填，不允许出现上面未列出的字段。`;
+
 interface Scenario {
   id: string;
   label: string;
@@ -196,6 +231,8 @@ interface Scenario {
   prompt?: string;
   /** 可选 system 消息，用于构造拒答场景 */
   system?: string;
+  /** 没有机器 schema 的场景（json_object / 纯 prompt）用它作为"意图尺子"校验 */
+  intentSchema?: Record<string, unknown>;
 }
 
 const scenarios: Scenario[] = [
@@ -289,6 +326,41 @@ const scenarios: Scenario[] = [
     label: "A5b json_object + 文字版 schema",
     body: { response_format: { type: "json_object" } },
     prompt: `${TASK}\n${SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+  },
+  // ---- 2×2 对照：同一份 hard schema，机器 schema / 文字 schema / 两者都有 / 都没有 ----
+  {
+    id: "a-hard-schema",
+    label: "H1 json_schema（只有机器 schema，无文字）",
+    repeat: 5,
+    body: {
+      response_format: { type: "json_schema", json_schema: { name: "event_hard", strict: true, schema: HARD_SCHEMA } },
+    },
+    intentSchema: HARD_SCHEMA,
+  },
+  {
+    id: "a-hard-schema-text",
+    label: "H2 json_schema + 文字 schema（同 prompt 对照）",
+    repeat: 5,
+    body: {
+      response_format: { type: "json_schema", json_schema: { name: "event_hard", strict: true, schema: HARD_SCHEMA } },
+    },
+    prompt: `${TASK}\n${HARD_SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    intentSchema: HARD_SCHEMA,
+  },
+  {
+    id: "a-hard-object-text",
+    label: "H3 json_object + 文字 schema（同 prompt，无强制）",
+    repeat: 5,
+    body: { response_format: { type: "json_object" } },
+    prompt: `${TASK}\n${HARD_SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    intentSchema: HARD_SCHEMA,
+  },
+  {
+    id: "a-hard-object",
+    label: "H4 json_object（没有 schema 信息，基线）",
+    repeat: 5,
+    body: { response_format: { type: "json_object" } },
+    intentSchema: HARD_SCHEMA,
   },
   {
     id: "a-minimum-100",
@@ -763,6 +835,8 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
           // 主机名与路径 token 都要脱敏：只脱路径会把内网域名写进仓库
           endpoint: `${api.replace(/^https?:\/\/[^/]+/, "https://***").replace(/\/s\/u\/[^/]+\//, "/s/u/***/")}/chat/completions`,
           requestBody,
+          // 文字 schema / 纯 prompt 场景没有机器 schema，把"意图尺子"一并落盘
+          intentSchema: scenario.intentSchema,
           http: { status: res.status },
           raw: text,
         },
@@ -806,8 +880,8 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
   if (obs.jsonText !== undefined) {
     try {
       obs.parsed = JSON.parse(obs.jsonText);
-      // 用本场景实际发出的 schema 校验，不要用 EVENT_SCHEMA 原件
-      obs.schemaErrors = validate(obs.parsed, sentSchema(requestBody));
+      // 优先用场景声明的意图 schema；否则用实际发出的 schema，不要用 EVENT_SCHEMA 原件
+      obs.schemaErrors = validate(obs.parsed, scenario.intentSchema ?? sentSchema(requestBody));
       obs.sortedKeys = Object.keys(obs.parsed as object);
     } catch (error) {
       obs.schemaErrors = [`JSON 解析失败：${(error as Error).message}`];
@@ -837,6 +911,7 @@ async function revalidate(dir: string): Promise<void> {
   for (const file of files) {
     const sample = JSON.parse(await readFile(join(dir, file), "utf8")) as {
       requestBody: Record<string, unknown>;
+      intentSchema?: Record<string, unknown>;
       raw: string;
     };
     const body = JSON.parse(sample.raw) as {
@@ -866,7 +941,7 @@ async function revalidate(dir: string): Promise<void> {
     }
 
     // 旧口径刻意保留：用 EVENT_SCHEMA 原件 + 不含数值约束的老规则，用来对照
-    const errors = validate(parsed, sentSchema(sample.requestBody));
+    const errors = validate(parsed, sample.intentSchema ?? sentSchema(sample.requestBody));
     const oldErrors = validate(parsed, EVENT_SCHEMA);
     rows.push({ file, ok: errors.length === 0, oldOk: oldErrors.length === 0, errors, oldErrors });
   }
