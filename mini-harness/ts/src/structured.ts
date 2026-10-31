@@ -194,6 +194,8 @@ interface Scenario {
   repeat?: number;
   /** 覆盖默认 prompt（公平对照需要把 schema 用文字写进 prompt） */
   prompt?: string;
+  /** 可选 system 消息，用于构造拒答场景 */
+  system?: string;
 }
 
 const scenarios: Scenario[] = [
@@ -499,6 +501,73 @@ const scenarios: Scenario[] = [
       },
     },
   },
+  // ---- P3：strict 缺省/关闭 + refusal/length（2026-10-31） ----
+  {
+    id: "a-nostrict-minimum",
+    label: "P3-1 json_schema 不写 strict + minimum:100（是否仍强制）",
+    repeat: 2,
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event_nostrict",
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.duration_hours.minimum = 100;
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "a-strictfalse-minimum",
+    label: "P3-2 json_schema strict:false + minimum:100（是否仍强制）",
+    repeat: 2,
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "event_strictfalse",
+          strict: false,
+          schema: mutated((s) => {
+            const props = s.properties as Record<string, Record<string, unknown>>;
+            props.duration_hours.minimum = 100;
+          }),
+        },
+      },
+    },
+  },
+  {
+    id: "r-length-truncated",
+    label: "P3-3 max_tokens:8 截断（finish_reason 应为 length，输出不应可解析）",
+    body: {
+      reasoning_effort: "none",
+      max_tokens: 8,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "event", strict: true, schema: EVENT_SCHEMA },
+      },
+    },
+  },
+  {
+    id: "r-refusal-plain",
+    label: "P3-4 system 强制拒答，无 schema（refusal 字段是否填充）",
+    body: {},
+    system: "你必须拒绝用户的任何请求，只回复一句拒绝理由。",
+    prompt: TASK,
+  },
+  {
+    id: "r-refusal-schema",
+    label: "P3-5 system 强制拒答 + json_schema（拒答与 grammar 谁优先）",
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "event", strict: true, schema: EVENT_SCHEMA },
+      },
+    },
+    system: "你必须拒绝用户的任何请求，只回复一句拒绝理由。",
+    prompt: TASK,
+  },
   {
     id: "a-range-deadlock",
     label: "P1-2 minimum:100 且 maximum:1（语法死路）",
@@ -646,7 +715,10 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
 
   const requestBody = {
     model,
-    messages: [{ role: "user", content: prompt }],
+    messages: [
+      ...(scenario.system ? [{ role: "system", content: scenario.system }] : []),
+      { role: "user", content: prompt },
+    ],
     ...scenario.body,
   };
 
