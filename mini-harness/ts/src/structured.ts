@@ -130,6 +130,50 @@ function bigSchema(fields: number): Record<string, unknown> {
   };
 }
 
+/**
+ * P1-1b：把 schema 撑大，但把输出锁死成 `{"field_001":"x"}`。
+ * `$defs` 不被引用，只用于增加 schema 体积；若 schema 真的进 prompt，token 会随体积涨。
+ * nonce 用来保证首次请求命中不到之前的编译缓存。
+ */
+function bigSchemaFixed(fields: number, nonce: string): Record<string, unknown> {
+  const defs: Record<string, unknown> = {};
+  for (let i = 1; i <= fields; i += 1) {
+    defs[`def_${String(i).padStart(3, "0")}`] = {
+      type: "object",
+      description: `schema-size filler ${nonce} #${i}：只用于撑大 schema，不参与根对象输出。`,
+      properties: { v: { type: "string" } },
+      required: ["v"],
+      additionalProperties: false,
+    };
+  }
+  return {
+    type: "object",
+    description: `cold-warm probe ${nonce}`,
+    properties: { field_001: { type: "string", enum: ["x"] } },
+    required: ["field_001"],
+    additionalProperties: false,
+    $defs: defs,
+  };
+}
+
+/**
+ * P1-1e：120 个字段全部必填，让文法状态真正变复杂。
+ * 配合 max_tokens=1 只测"编译 + 首 token"，不把生成时间混进来。
+ */
+function bigSchemaRequired(fields: number, nonce: string): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (let i = 1; i <= fields; i += 1) {
+    properties[`field_${String(i).padStart(3, "0")}`] = { type: "string", enum: ["x"] };
+  }
+  return {
+    type: "object",
+    description: `ttft probe ${nonce}`,
+    properties,
+    required: Object.keys(properties),
+    additionalProperties: false,
+  };
+}
+
 /** 把同一份 schema 用自然语言完整描述出来，用于"没有 response_format 时"的公平对照 */
 const SCHEMA_TEXT = `JSON 必须严格符合以下结构：
 {
@@ -345,6 +389,113 @@ const scenarios: Scenario[] = [
       response_format: {
         type: "json_schema",
         json_schema: { name: "big", strict: true, schema: bigSchema(120) },
+      },
+    },
+  },
+  {
+    id: "a-big-fixed-1",
+    label: "P1-1b 固定输出大 schema #1（冷/热各一次，输出锁死）",
+    repeat: 3,
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_fixed_1", strict: true, schema: bigSchemaFixed(120, "probe-1") },
+      },
+    },
+  },
+  {
+    id: "a-big-fixed-2",
+    label: "P1-1b 固定输出大 schema #2（换 nonce 再取一次冷启动）",
+    repeat: 3,
+    body: {
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_fixed_2", strict: true, schema: bigSchemaFixed(120, "probe-2") },
+      },
+    },
+  },
+  {
+    id: "a-big-fixed-nothink",
+    label: "P1-1c 尝试关思考：chat_template_kwargs.thinking=false",
+    body: {
+      chat_template_kwargs: { thinking: false },
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_fixed_nothink", strict: true, schema: bigSchemaFixed(120, "probe-nothink") },
+      },
+    },
+  },
+  {
+    id: "a-big-fixed-effort",
+    label: "P1-1c 尝试关思考：reasoning_effort=none",
+    body: {
+      reasoning_effort: "none",
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_fixed_effort", strict: true, schema: bigSchemaFixed(120, "probe-effort") },
+      },
+    },
+  },
+  {
+    id: "a-big-nothink-1",
+    label: "P1-1d 关思考 + 固定输出大 schema #1（冷/热各一次）",
+    repeat: 3,
+    body: {
+      reasoning_effort: "none",
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_nothink_1", strict: true, schema: bigSchemaFixed(120, "cold-a") },
+      },
+    },
+  },
+  {
+    id: "a-big-nothink-2",
+    label: "P1-1d 关思考 + 固定输出大 schema #2（换 nonce 再取冷启动）",
+    repeat: 3,
+    body: {
+      reasoning_effort: "none",
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_nothink_2", strict: true, schema: bigSchemaFixed(120, "cold-b") },
+      },
+    },
+  },
+  {
+    id: "a-big-ttft-1",
+    label: "P1-1e 首 token 探测：120 字段全必填 + max_tokens=1 #1（冷/热）",
+    repeat: 3,
+    body: {
+      reasoning_effort: "none",
+      max_tokens: 1,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_ttft_1", strict: true, schema: bigSchemaRequired(120, "ttft-a") },
+      },
+    },
+  },
+  {
+    id: "a-big-ttft-2",
+    label: "P1-1e 首 token 探测：120 字段全必填 + max_tokens=1 #2（换 nonce）",
+    repeat: 3,
+    body: {
+      reasoning_effort: "none",
+      max_tokens: 1,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_ttft_2", strict: true, schema: bigSchemaRequired(120, "ttft-b") },
+      },
+    },
+  },
+  {
+    id: "a-big-ttft-3",
+    label: "P1-1e 首 token 探测：121 字段（全新文法，先跑一次小 schema 建连）",
+    repeat: 2,
+    body: {
+      reasoning_effort: "none",
+      max_tokens: 1,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "big_ttft_3", strict: true, schema: bigSchemaRequired(121, "ttft-c") },
       },
     },
   },
