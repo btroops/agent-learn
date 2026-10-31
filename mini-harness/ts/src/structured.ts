@@ -257,7 +257,7 @@ const scenarios: Scenario[] = [
   },
   {
     id: "a-json-object",
-    label: "A5 json_object（老式 JSON 模式，schema 靠 prompt 描述）",
+    label: "A5 json_object（无 schema 信息，仅保证 JSON 语法）",
     body: { response_format: { type: "json_object" } },
   },
   {
