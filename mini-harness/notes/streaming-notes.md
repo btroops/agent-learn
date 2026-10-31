@@ -294,3 +294,11 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 **入口校验仍然缺位**：P0-2 用 `strict:true` + 故意缺 `additionalProperties` 的 schema，返回 **200**。也就是说网关不在入口按 OpenAI 元规则拒绝，坏 schema 会被直接交给编译器或回退——与 A3/A4 的表现一致。
 
 【待验证】B + `strict:true` 下 `required` / `enum` 是否同样生效（目前只测了 `minimum`）；以及 `strict` 是否只对 `tool_choice` 强制指定的那个工具生效。
+
+### 5.6 大 schema 的编译开销：约 20ms，别把建连当编译
+
+16k 字符的 schema 在 A 路径仍只占 75 prompt tokens（§12.1）。冷热复测（§12.6）：固定输出 + 关思考 + `max_tokens:1`，先跑一次小 schema 建连，再发 121 字段全新文法——首次 304ms、第二次 282ms，**编译/缓存差约 20ms**，远小于最初观察到的 ~400ms。
+
+最初那 400ms 来自两处：进程内首次请求的 TCP/TLS 建连（约 250–280ms），以及 reasoning token 长度波动（100–200 tokens）。另外，关思考会同时改 `prompt_tokens`（75 → 49），跨模式比 token 不能直接相减。
+
+选型含义：大 schema 的编译成本可以忽略；真正的成本是**思考 token** 与**首次建连**。

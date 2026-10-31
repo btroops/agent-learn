@@ -482,6 +482,8 @@ system 提示词
 
 同一条原因还影响**预算预留**：你设 `max_tokens: 1000`，模型可能只输出 200 字 content，剩下 800 全烧在 reasoning 上——用户看到的是"回答被截断"。
 
+**关思考的两种写法（【实测】Day 5 P1）**：`reasoning_effort: "none"` 与 `chat_template_kwargs: {"thinking": false}` 都被接受，响应里 `reasoning` 为空、`reasoning_tokens` 为 0。同一句 prompt：开思考时 `prompt_tokens` 75，关思考 49（模板少了 thinking 提示）；大 schema 场景的 `completion_tokens` 从 176–213 降到 10–13。跨思考模式比较 token 不能直接相减；做延迟/缓存实验应先关思考。
+
 ---
 
 ## 5. 流式：官方规范（**本仓库尚未实测**）
@@ -689,6 +691,7 @@ access-control-*, strict-transport-security, x-content-type-options, ...
 18. **照抄文档里的 `tool_choice` 示例** → 文档把 Chat Completions 与 Responses 混着举例：Chat 是 `{"type":"function","function":{"name":"x"}}`，Responses 是 `{"type":"function","name":"x"}`。抄错形状直接 400。
 19. **以为 `strict: true` 可以随便加** → OpenAI 侧每个对象必须 `additionalProperties: false`、全部字段必须进 `required`，否则 400；可选字段要用 `["string","null"]` 表达。本网关不校验这些元规则（P0-2 返回 200），不能指望它兜底。
 20. **以为 guided decoding 保证 100% 合法** → `required` 指向不存在字段时，本网关返回 200 且输出缺该字段（devlog §12.3）；客户端校验仍不可省。
+21. **把首次建连当成 schema 编译开销** → 进程内首次请求多出的 250–280ms 是 TCP/TLS；排除建连后，16k 字符 schema 的编译/缓存差约 20ms（devlog §12.6）。
 
 ---
 
