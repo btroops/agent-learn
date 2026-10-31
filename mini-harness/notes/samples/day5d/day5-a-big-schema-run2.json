@@ -1,0 +1,873 @@
+{
+  "capturedAt": "2026-10-31T11:07:41.101Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "big",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "field_001": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 1 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_002": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 2 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_003": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 3 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_004": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 4 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_005": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 5 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_006": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 6 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_007": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 7 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_008": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 8 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_009": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 9 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_010": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 10 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_011": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 11 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_012": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 12 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_013": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 13 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_014": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 14 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_015": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 15 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_016": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 16 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_017": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 17 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_018": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 18 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_019": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 19 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_020": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 20 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_021": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 21 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_022": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 22 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_023": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 23 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_024": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 24 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_025": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 25 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_026": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 26 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_027": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 27 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_028": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 28 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_029": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 29 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_030": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 30 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_031": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 31 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_032": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 32 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_033": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 33 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_034": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 34 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_035": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 35 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_036": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 36 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_037": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 37 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_038": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 38 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_039": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 39 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_040": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 40 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_041": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 41 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_042": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 42 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_043": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 43 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_044": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 44 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_045": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 45 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_046": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 46 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_047": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 47 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_048": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 48 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_049": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 49 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_050": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 50 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_051": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 51 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_052": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 52 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_053": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 53 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_054": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 54 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_055": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 55 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_056": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 56 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_057": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 57 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_058": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 58 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_059": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 59 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_060": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 60 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_061": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 61 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_062": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 62 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_063": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 63 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_064": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 64 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_065": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 65 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_066": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 66 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_067": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 67 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_068": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 68 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_069": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 69 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_070": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 70 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_071": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 71 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_072": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 72 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_073": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 73 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_074": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 74 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_075": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 75 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_076": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 76 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_077": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 77 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_078": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 78 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_079": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 79 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_080": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 80 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_081": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 81 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_082": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 82 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_083": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 83 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_084": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 84 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_085": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 85 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_086": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 86 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_087": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 87 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_088": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 88 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_089": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 89 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_090": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 90 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_091": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 91 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_092": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 92 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_093": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 93 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_094": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 94 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_095": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 95 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_096": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 96 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_097": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 97 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_098": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 98 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_099": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 99 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_100": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 100 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_101": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 101 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_102": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 102 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_103": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 103 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_104": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 104 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_105": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 105 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_106": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 106 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_107": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 107 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_108": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 108 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_109": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 109 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_110": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 110 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_111": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 111 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_112": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 112 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_113": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 113 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_114": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 114 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_115": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 115 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_116": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 116 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_117": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 117 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_118": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 118 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_119": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 119 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            },
+            "field_120": {
+              "type": "string",
+              "enum": [
+                "x"
+              ],
+              "description": "第 120 个字段的说明：这段文字只应存在于 schema 本身，若 prompt_tokens 随它增长，说明 schema 被序列化进了上下文。"
+            }
+          },
+          "required": [
+            "field_001"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-a9ccbb4c-c485-47a8-9e24-eba542b449a0\",\"object\":\"chat.completion\",\"created\":1793444859,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"field_001\\\":\\\"x\\\",\\\"field_002\\\":\\\"x\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户。需要把中文句子转JSON，只输出JSON，不要解释、不要markdown。需要提取字段：时间明天上午十点，地点杭州西湖区，会议产品评审会，预计2小时，负责人张三，优先级高。需要合理JSON结构。只输出JSON。注意“明天”相对时间，保留原文。字段名可以中文或英文。用户没指定结构。输出合法 JSON。不要代码块。需要确保只有 JSON。例如 {\\\"会议主题\\\":\\\"产品评审会\\\",\\\"时间\\\":\\\"明天上午十点\\\",\\\"地点\\\":\\\"杭州西湖区\\\",\\\"预计时长\\\":\\\"2小时\\\",\\\"负责人\\\":\\\"张三\\\",\\\"优先级\\\":\\\"高\\\"}。只输出这个。不要 markdown。最终只 JSON。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":75,\"total_tokens\":243,\"completion_tokens\":168,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":145}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

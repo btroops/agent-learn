@@ -1,0 +1,76 @@
+{
+  "capturedAt": "2026-10-31T11:07:41.379Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "event",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "district": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "district"
+              ],
+              "additionalProperties": false
+            },
+            "start_time": {
+              "type": "string"
+            },
+            "duration_hours": {
+              "type": "number",
+              "minimum": 100,
+              "maximum": 1
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "location",
+            "start_time",
+            "duration_hours",
+            "priority",
+            "owner"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 400
+  },
+  "raw": "{\"error\":{\"message\":\"Grammar error: Unsatisfiable schema: required property 'duration_hours' is unsatisfiable\",\"type\":\"BadRequestError\",\"param\":null,\"code\":400}}"
+}
