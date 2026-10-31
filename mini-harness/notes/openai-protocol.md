@@ -687,7 +687,8 @@ access-control-*, strict-transport-security, x-content-type-options, ...
 16. **用 `'usage' in chunk` 判断有没有 usage** → 流式下每个 chunk 都有 `usage` 字段，值为 `null`。判据是 `chunk.usage != null`。
 17. **以为 `tools[].type` 只有 `"function"`** → **【官方】** 还有 `"custom"`（自由文本工具），响应侧对应 `custom.input` 而不是 `function.arguments`。写分派逻辑时要按 `type` 分支，别硬编码读 `function`。
 18. **照抄文档里的 `tool_choice` 示例** → 文档把 Chat Completions 与 Responses 混着举例：Chat 是 `{"type":"function","function":{"name":"x"}}`，Responses 是 `{"type":"function","name":"x"}`。抄错形状直接 400。
-19. **以为 `strict: true` 可以随便加** → 每个对象必须 `additionalProperties: false`、全部字段必须进 `required`，否则请求被拒；可选字段要用 `["string","null"]` 表达。
+19. **以为 `strict: true` 可以随便加** → OpenAI 侧每个对象必须 `additionalProperties: false`、全部字段必须进 `required`，否则 400；可选字段要用 `["string","null"]` 表达。本网关不校验这些元规则（P0-2 返回 200），不能指望它兜底。
+20. **以为 guided decoding 保证 100% 合法** → `required` 指向不存在字段时，本网关返回 200 且输出缺该字段（devlog §12.3）；客户端校验仍不可省。
 
 ---
 
@@ -821,7 +822,7 @@ grep -n "export interface CompletionUsage" -A 30 package/resources/completions.d
 | `stream_options.include_usage` | 流式请求加该字段，把原始 chunk 全打出来 | `[DONE]` 前出现 `choices: []` 且带 `usage` 的 chunk | Day 4 |
 | `obfuscation` | 同上，看每个 chunk 顶层有无 `obfuscation` | 有则该网关也开了防侧信道；没有则解析器可省一条"忽略未知字段"的兜底 | Day 4 |
 | `strict: true` | 带 `strict` 的工具 + 故意缺失 `additionalProperties` | 400 且错误信息点名缺哪条约束，才算"真支持" | **已验（Day 5 + P0）**：入口两侧都不校验元规则（A3/A4、P0-2 均 200）；tools 开 strict 后 `minimum` 生效（P0-1 输出 200） |
-| `response_format: json_schema` | 嵌套对象 + enum 的 schema | 返回体可直接 `JSON.parse` 且符合 schema | **已验（Day 5 A1）**：通过；schema 不进 `prompt_tokens` |
+| `response_format: json_schema` | 嵌套对象 + enum 的 schema | 返回体可直接 `JSON.parse` 且符合 schema | **已验（A1/P1）**：通过；16k 字符 schema 仍只占 75 `prompt_tokens`；语法死路 400，但 `required` 指向不存在字段时会静默弱化（devlog §12） |
 | `custom` 工具 | `type:"custom"` + `format:{type:"text"}` | 响应 `tool_calls[].custom.input` 是纯文本，或明确 400 | Day 5（顺带） |
 | `tool_choice.allowed_tools` | 传两个工具、只允许一个 | 模型不会调用被排除的那个；若报 400 则记"不支持" | Day 5（顺带） |
 | `grammar` 子集 | 不在本仓库验证范围内 | — | 不排期 |

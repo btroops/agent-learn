@@ -362,7 +362,7 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 | A1 `json_schema`（嵌套 + 枚举） | 200 | 通过 | 75 / 169 | 完全符合 schema |
 | A2 `+ minimum:0` | 200 | 通过 | 75 / 266 | **没被拒**，与 OpenAI strict 行为不同 |
 | A3 `+ additionalProperties:true` | 200 | 通过 | 75 / 187 | **没被拒** |
-| A4 `required` 里去掉 `owner` | 200 | 通过¹ | 75 / 172 | **输出真的没有 owner** |
+| A4 `required` 里去掉 `owner` | 200 | 通过¹ | 75 / 172 | 首次输出没有 owner（复跑 2/3 又出现，见 §12.4） |
 | A5 `json_object`（无文字 schema） | 200 | 失败（中文键） | 75 / 163 | 只保证是 JSON，不保证结构 |
 | A5b `json_object` + 文字 schema | 200 | 通过 | 198 / 212 | 补齐 schema 描述后可用 |
 | B1 `tool_choice` 指定函数名 | 200 | 通过 | 451 / 295 | 参数在 `tool_calls[0].arguments` |
@@ -372,15 +372,17 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 | A2b `+ minimum:100` | 200 | 通过 | 75 / 216 | **`duration_hours` 输出了 205** |
 
 > ¹ 原先记为"失败（缺 owner）"，是**校验用错 schema** 所致：本场景实际发出的 schema 里 `required` 已不含 `owner`，输出少该字段完全合规。`205` 同理——它满足 `minimum: 100`，本来就合法。两处口径问题与离线复验见本节末尾「补充实验」。
+>
+> 复跑（§12.4）显示 owner 3 次里出现 2 次：它只是**可选**，不能据此判断 `required` 是否被执行。
 
 ### 3. 三个实质发现
 
-**① 这个网关在 `response_format` 通道上真的在做语法级强制解码（guided decoding），而不只是"建议"。**（`tools` 通道不强制，见 §9；该结论受"B 没开 strict"影响，见 §10.2）
+**① 这个网关在 `response_format` 通道上真的在做语法级强制解码（guided decoding），而不只是"建议"。**（`tools` 需开 `strict` 才强制，见 §11）
 
-证据有两处：
+证据以数值/枚举为主：
 
-- A4 把 `owner` 从 `required` 里去掉，输出**真的**少了 `owner`——schema 在驱动生成，不是事后过滤。
-- A2b 给 `duration_hours` 加 `minimum: 100`，而原文明明是"预计 2 小时"，模型输出了 **205**。它无法输出 `<100` 的合法值，于是编了一个。
+- A2b 给 `duration_hours` 加 `minimum: 100`，而原文明明是"预计 2 小时"，模型输出了 **205**；复跑 3 次为 `2731 / 2000 / 2123`（§12.4）。它无法输出 `<100` 的合法值，只能编一个。
+- A4 把 `owner` 从 `required` 里去掉，首跑输出少了 `owner`，但复跑 2/3 又带上了——只能说明 `owner` 可选，**不能**证明 `required` 被执行（§12.4）。
 
 **这条比"支持 json_schema"重要得多**：约束不可满足时，模型不会报错，而是**静默扭曲语义**去满足语法。所以 schema 校验通过 ≠ 数据正确，业务校验不能省。
 
@@ -448,7 +450,7 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 两条结论：
 
-- **A4 的"失败"是假象。** 该场景的 schema 本就不要求 `owner`，输出没有 `owner` 完全合规——这反而是 `required` 被执行的最强证据：模型没有"顺手多写一个本来不要的字段"。第 2 节该行已改为"通过"。
+- **A4 的"失败"是假象，但"required 被执行"也不是结论。** 该场景的 schema 本就不要求 `owner`，输出没有 `owner` 完全合规；复跑 3 次里 2 次又带上了 `owner`（§12.4），说明它只是可选字段。A4 无法区分"`required` 被执行"与"`required` 被忽略"，第 2 节该行的"最强证据"说法已收回。
 - **"205 会被更严的校验挡住"这个假设不成立。** `205 ≥ 100`，任何正确的校验器都会放行。所以 5.1 的结论要说得更硬：这类错误**只能靠业务校验**发现，schema 层再怎么加严都拦不住。
 
 教训：`schema 校验=通过/失败` 这一列，只有在"校验器实现了该 schema 的全部关键字"且"校验的是实际发出的那份 schema"时才成立，否则它只是个装饰性字段——我自己就先被它误导了一轮。
@@ -519,8 +521,8 @@ A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶
 | A1 | 正常 schema 可用、输出合法 | 任何强制力 |
 | A2 `minimum:0` | 入口不拒该 schema | `minimum` 是否执行（`2 ≥ 0` 恒真） |
 | A3 `additionalProperties:true` | 入口不拒 | 编译器是否接受 `true`；"输出没多字段"无法区分"允许但没加"与"按 false 处理" |
-| A4 去掉 `owner` | `required` 被执行 + 入口不校验 strict（输出真的没有 owner） | 单次样本；建议重复 3 次加固 |
-| A2b `minimum:100` | 数值约束被执行 + 约束冲突时静默扭曲语义 | — |
+| A4 去掉 `owner` | 入口不校验 strict；`owner` 只是可选（3 次重复 2 次出现、1 次缺失） | **不能证明 `required` 被执行**（与"`required` 被忽略"无法区分）；原单次结论已收回（§12.4） |
+| A2b `minimum:100` | 数值约束被执行 + 约束冲突时静默扭曲语义；重复 3 次值为 `2731 / 2000 / 2123` | — |
 | A5 `json_object` | 只保证 JSON 语法 | 不能当"纯 prompt 不行"的基线（prompt 未给字段名） |
 | A5b | 文字 schema 能补位；成本 +123 token | — |
 
@@ -566,3 +568,57 @@ A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶
 - 仍未测：B + strict 下 `required` / `enum` 是否同样生效；以及 `strict` 是否只对 `tool_choice` 强制的那个工具生效。
 
 对选型的影响：`tools` 并不天然"只是说明书"——**开 `strict:true` 后它同样会被服务端约束**。但入口不校验元规则，坏 schema 仍会被放行；且参数正确性仍要客户端校验，因为 strict 只保证结构、不保证语义（P0-1 的 2 小时 → 200 小时就是新证据）。
+
+### 12. P1/P2 结果：大 schema、语法死路与重复实验（2026-10-31，14 次请求）
+
+样本：`samples/day5d/`（P1，5 次）、`samples/day5e/run{1,2,3}/`（P2，9 次）。
+
+#### 12.1 大 schema：16k 字符仍不进 prompt
+
+| 指标 | run1 | run2 |
+|---|---|---|
+| schema | 120 字段，16058 字符 / 25178 字节 | 同 |
+| prompt_tokens | 75 | 75 |
+| completion_tokens | 144 | 168 |
+| 耗时 | 2405 ms | 2002 ms |
+| 输出 | `{"field_001":"x"}` | `{"field_001":"x","field_002":"x"}` |
+
+结论：**16k 字符的 schema 仍保持 75 prompt tokens**，带外通道不是小 schema 的偶然；若序列化进上下文，按中文约 1 token/字也应是数千 token。冷热两次差约 400ms，但 completion 不同（144 vs 168），**不能把差值归因于编译缓存**；要测缓存得固定输出长度或看首 token 延迟。
+
+#### 12.2 语法死路：编译器在编译阶段就 400
+
+| 场景 | HTTP | 耗时 | 错误 |
+|---|---|---|---|
+| `minimum:100` + `maximum:1` | 400 | 276 ms | `Grammar error: Unsatisfiable schema: required property 'duration_hours' is unsatisfiable` |
+| `enum: []` | 400 | 135 ms | 同类，点名 `priority` |
+
+所以死路不会静默卡住；vLLM 判定不可满足后直接拒绝。错误文案统一说 "required property ... unsatisfiable"，即使根因是数值区间或空枚举。
+
+#### 12.3 `required` 指向不存在的字段：200，但输出违反 schema
+
+`required` 里加 `ghost`（`properties` 没有，且 `additionalProperties:false`）：**200**，输出不含 `ghost`，本地校验报 `$.ghost 缺失`。
+
+这说明编译器没有把这种冲突判为 unsatisfiable，而是**静默弱化**：返回成功，但产物不符合实际发出的 schema。这是"guided decoding 保证 100% 合法"的反例——坏 schema 可能被放行并弱化，客户端校验仍不可省。
+
+#### 12.4 重复实验：A4 的原结论被推翻
+
+A4（`required` 去掉 `owner`）重复 3 次：
+
+| run | owner | completion |
+|---|---|---|
+| 1 | 张三 | 236 |
+| 2 | 张三 | 211 |
+| 3 | **缺失** | 235 |
+
+首跑恰好落在"缺 owner"一侧，于是被写成"`required` 被执行"；复跑 2/3 又带上 owner。正确结论：**owner 只是可选字段**，A4 无法区分"`required` 被执行"与"`required` 被忽略"。§3① 与该场景原结论已收回；guided decoding 的硬证据是 A2b/S1/S2（数值与枚举）。
+
+A2b 重复 3 次：`2731 / 2000 / 2123`，全部 ≥100，但值每次不同。再次证明 `minimum` 被强制，同时说明"合法值"是随机的，业务校验不能省。
+
+S2 重复 3 次：`priority` 全部 `low`，`owner` 全部张三，`start_time` 全部"明天上午十点"。Day 5b 那次"李四 + 编造日期"**没有复现**，更可能是采样噪声（n=3 仍不足以定论）。
+
+#### 12.5 修订清单
+
+- §3①：guided decoding 证据从 A4 改为 A2b/S1/S2；A4 仅证明"owner 未被强制"。
+- §4/§10.2 的 A4 行：从"`required` 被执行"改为"owner 可选，无法判别 required"。
+- 大 schema：带外通道的规模边界至少到 16k 字符 / 120 字段。
+- 死路：编译器会 400；但 `required` 指向不存在字段时会 200 并静默弱化。
