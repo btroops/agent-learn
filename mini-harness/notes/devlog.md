@@ -642,3 +642,36 @@ S2 重复 3 次：`priority` 全部 `low`，`owner` 全部张三，`start_time` 
 - 思考开关会改 `prompt_tokens`：关思考后 75 → 49（模板少了 thinking 相关提示），跨模式比较 token 时不能直接相减。
 
 样本：`samples/day5f/`（固定输出）、`day5g/`（关思考冷热）、`day5h/`（max_tokens=1）、`day5i/`（建连后全新文法）。
+
+### 13. P3：strict 不是 response_format 的开关；length/refusal 会破保证（7 次请求）
+
+样本 `samples/day5j/`。判据：同一份 `minimum:100`（原文 2 小时）。
+
+#### 13.1 strict 缺省 / false 仍然强制
+
+| 场景 | 输出 | 结论 |
+|---|---|---|
+| `strict:true`（A2b/P2） | 205 / 2731 / 2000 / 2123 | 强制 |
+| 不写 `strict` | 225 / 200000 | **仍强制** |
+| `strict:false` | 2612 / 217 | **仍强制** |
+
+三次的 `prompt_tokens` 都是 75，reasoning 里也都没有出现 schema。结论：**对 `response_format.json_schema`，strict 不是开关；只要给了 schema 就会编译**。这与 tools 通道相反（P0-1/S4：strict 才强制）。
+
+#### 13.2 `finish_reason:"length"`：保证失效
+
+`max_tokens:8`、关思考：`finish_reason:"length"`，content 是 `{"title":"产品评审会","location`，JSON 不完整。**截断时不能 parse，更不能当成功**；harness 必须先看 `finish_reason`。
+
+#### 13.3 refusal：字段不填充，且会被 grammar 覆盖
+
+- 无 schema + system 强制拒答：content 是"抱歉，根据我的限制，我不能处理这个请求。"，`refusal: null`。
+- 有 schema + 同一 system：reasoning 明确计划拒答（"必须拒绝任何请求……只回复一句拒绝理由"），最终 content 却是**完整合法的事件 JSON**（标题、地点、时长 2 等），`refusal: null`。
+
+这说明两件事：
+
+1. 本网关不填 OpenAI 的 `refusal` 字段，拒答只能从 content 判断；
+2. **schema 约束会覆盖拒答意图**：模型想拒绝，但 grammar 只允许 JSON，于是它把任务数据填了进去。对 harness 来说，凡是用 `json_schema`，就不能假设"模型拒绝 = content 为空或 `refusal` 非空"；拒答可能表现为"结构完美但内容不该存在"。
+
+#### 13.4 对前文的修订
+
+- A 路径的 strict 不是开关（§13.1）；tools 才是 strict 控制（§11）。
+- `length` 与 refusal 两种破保证情形已实测（§13.2/13.3）；解析前必须检查 `finish_reason`，`refusal` 字段不可依赖。

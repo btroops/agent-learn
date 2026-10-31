@@ -150,6 +150,8 @@ ChatResponse
 
 `refusal` / `annotations` / `audio` / `function_call` 实测恒为 `null`，所以**不进类型**。
 
+其中 `refusal` 要单独说：即使 system 强制拒答，该字段仍为 `null`，拒答落在 `content`；而带 `json_schema` 时，拒答意图会被 grammar 覆盖，最终输出的是完整任务 JSON（P3-5）。所以不能靠 `refusal` 判断模型是否拒绝。
+
 `function_call` 是需要单独说一句的：它是工具调用的**旧版字段**（单数，一次只能一个），`tool_calls` 是它的替代品（数组，可并行）。有些老网关只实现旧字段。**【规范】** 两者不要同时用。
 
 如果哪天换网关后 `tool_calls` 一直是 `null` 但 `finish_reason` 是 `tool_calls`，第一件事就是去看 `function_call`。
@@ -234,7 +236,7 @@ type ChatCompletionTool = ChatCompletionFunctionTool | ChatCompletionCustomTool;
 - **数值/字符串约束的封禁范围随版本变化**：2024 首发时 `minimum`/`maximum`/`multipleOf`/`minLength`/`maxLength` 均不支持；2026 年外部资料称标准模型已支持数值约束，**微调模型仍不支持**。官方页本次访问 403、未直读，标【待官方复核】。
 - **错误形态**：入口校验失败是 400，消息带上下文路径，如 `Invalid schema for response_format 'event': In context=(), 'additionalProperties' is required to be supplied and to be false.`；tools 通道是 `Invalid schema for function 'emit_event': ...`。
 - **两个例外会让"保证"失效**：`refusal` 非空、`finish_reason: "length"`。解析前先看这两个。
-- `strict` 也出现在 `response_format.json_schema.strict`，不只 tools。本项目 P0 实测：tools 开 `strict:true` 后 `minimum` 同样被强制（输出 200），不开则被无视（输出 2）——**强制力跟 strict 开关走，不跟通道走**（见 devlog §11）。但入口仍不校验元规则（P0-2 返回 200）。
+- `strict` 也出现在 `response_format.json_schema.strict`，但两个通道行为不同：`response_format` 只要给 `json_schema` 就编译，`strict` 缺省 / `false` / `true` 都强制（P3）；`tools` 则必须显式 `strict:true` 才强制，否则参数只是说明书（P0/S4）。两侧入口都不校验元规则（P0-2 返回 200）。
 
 另外几个行为差异也要记住：
 
@@ -692,6 +694,8 @@ access-control-*, strict-transport-security, x-content-type-options, ...
 19. **以为 `strict: true` 可以随便加** → OpenAI 侧每个对象必须 `additionalProperties: false`、全部字段必须进 `required`，否则 400；可选字段要用 `["string","null"]` 表达。本网关不校验这些元规则（P0-2 返回 200），不能指望它兜底。
 20. **以为 guided decoding 保证 100% 合法** → `required` 指向不存在字段时，本网关返回 200 且输出缺该字段（devlog §12.3）；客户端校验仍不可省。
 21. **把首次建连当成 schema 编译开销** → 进程内首次请求多出的 250–280ms 是 TCP/TLS；排除建连后，16k 字符 schema 的编译/缓存差约 20ms（devlog §12.6）。
+22. **以为 `refusal` 会告诉你模型拒答** → 本网关恒 `null`；有 `json_schema` 时拒答意图会被 grammar 覆盖成合法任务 JSON（devlog §13.3）。
+23. **`finish_reason:"length"` 还去 `JSON.parse`** → 输出是半截 JSON；先判 `finish_reason`（devlog §13.2）。
 
 ---
 

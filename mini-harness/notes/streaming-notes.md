@@ -256,11 +256,13 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 
 `additionalProperties: true` 与 `required` 缺字段——这两种按 OpenAI strict 规则必然被拒，本网关全部返回 200。`minimum` 的封禁状态随版本变化：2024 首发时属于不支持关键字，2026 年外部资料称标准模型已支持、微调模型仍不支持（官方页未直读，标【待官方复核】）。
 
-本网关只关心"能不能编译"，不关心 OpenAI 的合规性检查。但要注意证据强度：**200 只证明入口没拒，不证明编译器如何解释坏 schema**（A3 的输出"没多字段"就无法区分"允许但没加"和"不支持 true、按 false 处理"）。P1 补了两种失败形态：语法死路（`minimum:100` + `maximum:1`、`enum:[]`）在编译期直接 400；但 `required` 指向不存在的字段时却返回 200，并**静默弱化**，输出违反实际发出的 schema（§12.3）。换供应商后本节的数字都要重测。
+本网关只关心"能不能编译"，不关心 OpenAI 的合规性检查。但要注意证据强度：**200 只证明入口没拒，不证明编译器如何解释坏 schema**（A3 的输出"没多字段"就无法区分"允许但没加"和"不支持 true、按 false 处理"）。P1 补了两种失败形态：语法死路（`minimum:100` + `maximum:1`、`enum:[]`）在编译期直接 400；但 `required` 指向不存在的字段时却返回 200，并**静默弱化**，输出违反实际发出的 schema（§12.3）。
+
+另外，A 路径只要给了 `json_schema` 就会编译，`strict` 缺省或 `false` 都不影响（P3）；`strict` 只对 tools 通道起开关作用。换供应商后本节的数字都要重测。
 
 ### 5.3 选型规则（本项目采用）
 
-1. **有副作用的动作 → B**（`tools` + `tool_choice`）：需要 `id`、需要执行、需要 `role:"tool"` 回填，这些 `json_schema` 给不了。代价是参数**不受语法强制**（见 5.5），执行前必须自己做校验。
+1. **有副作用的动作 → B**（`tools` + `tool_choice`）：需要 `id`、需要执行、需要 `role:"tool"` 回填，这些 `json_schema` 给不了。但必须显式开 `function.strict:true`，否则参数只是说明书（见 5.5）；开了之后与 A 一样受语法约束，仍要做业务校验。
 2. **纯数据抽取 → A**（`json_schema`）：强制力最强；带外 schema 不占 prompt token（外部资料显示 OpenAI 同样不计，不是本网关独有，见 devlog Day 5 §10.3）。
 3. **C 只作降级**：网关不支持 A/B 时用文字 schema + 客户端 `JSON.parse` + schema 校验，失败要重试，不能当成功。
 4. 无论哪条路径，**业务校验不能省**（见 5.1）。
@@ -302,3 +304,8 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 最初那 400ms 来自两处：进程内首次请求的 TCP/TLS 建连（约 250–280ms），以及 reasoning token 长度波动（100–200 tokens）。另外，关思考会同时改 `prompt_tokens`（75 → 49），跨模式比 token 不能直接相减。
 
 选型含义：大 schema 的编译成本可以忽略；真正的成本是**思考 token** 与**首次建连**。
+
+### 5.7 保证失效的两种情形：length 与 refusal
+
+- **`finish_reason:"length"`**：`max_tokens:8` 时 content 被截成 `{"title":"产品评审会","location`，JSON 不完整。解析前必须先看 `finish_reason`。
+- **refusal**：本网关不填 `refusal` 字段（恒 `null`）。无 schema 时拒答落在 content；**有 schema 时，grammar 会覆盖拒答意图**——system 强制拒答、reasoning 也计划拒答，最终仍输出完整的事件 JSON。用 `json_schema` 时不能把"结构化成功"当成"模型同意执行"。
