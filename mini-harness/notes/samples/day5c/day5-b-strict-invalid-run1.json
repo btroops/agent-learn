@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-10-31T11:02:25.186Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_bad",
+          "description": "故意缺少 additionalProperties，用于探测 strict 入口校验",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_bad"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-2c2838f0-c33b-43fc-a199-3d09a40f7b9b\",\"object\":\"chat.completion\",\"created\":1793444543,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-852ee3d31fd2f85c\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_bad\",\"arguments\":\"{\\\"title\\\": \\\"明天上午十点在杭州西湖区开产品评审会，预计2小时，负责人张三，优先级高\\\"}\"}}],\"reasoning\":\"The user wants me to convert a sentence into JSON. The available tool is emit_event_bad which has a schema with only \\\"title\\\" property, strict: true but no additionalProperties. Hmm. The tool description says it deliberately lacks additionalProperties for probing strict entry validation.\\n\\nThe sentence contains: time (明天上午十点), location (杭州西湖区), event (产品评审会), duration (2小时), owner (张三), priority (高).\\n\\nThe tool only accepts \\\"title\\\" string. I should call the tool with a title containing the info. Let me call it.\\n\\nStrict mode with no additionalProperties means passing only title. Let me do that in Chinese.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":340,\"total_tokens\":538,\"completion_tokens\":198,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":137}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}
