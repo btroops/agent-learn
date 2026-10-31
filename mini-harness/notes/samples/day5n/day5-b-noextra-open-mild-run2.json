@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-10-31T13:30:07.779Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_open",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": true
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_open"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-8e4eaf41-9570-4b29-876e-2ef82cee24cd\",\"object\":\"chat.completion\",\"created\":1793453406,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-b5bed1576e52169e\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_open\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"time\\\": \\\"明天上午十点\\\", \\\"location\\\": \\\"杭州西湖区\\\", \\\"duration\\\": \\\"2小时\\\", \\\"owner\\\": \\\"张三\\\", \\\"priority\\\": \\\"高\\\"}\"}}],\"reasoning\":\"The user wants to convert a sentence into JSON using the tool. The tool is emit_event_open with a title parameter required, plus additional properties allowed.\\n\\nI need to call it. The title: 产品评审会. Additional fields can be passed since additionalProperties is true: time, location, duration, owner, priority.\\n\\nLet me construct: title \\\"产品评审会\\\", time \\\"明天上午十点\\\", location \\\"杭州西湖区\\\", duration \\\"2小时\\\", owner \\\"张三\\\", priority \\\"高\\\".\\n\\nI should call the tool.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":341,\"total_tokens\":576,\"completion_tokens\":235,\"prompt_tokens_details\":{\"cached_tokens\":256,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":107}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

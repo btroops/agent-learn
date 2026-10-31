@@ -730,7 +730,7 @@ H2 vs H3 是同 prompt、同 token 的严格对照，唯一差异是 `response_f
 1. out 组 run3 的 reasoning 是“`priority, and optional checksum`… 我需要产出一个 checksum，我应该算一个”——模型**知道它是可选的，仍然主动填了**。出现率差异可能只来自"required 提醒了它"，不是语法强制。
 2. n=3，且 `checksum` 是可编造的字符串，模型想填就能填。要硬证据须让 required 字段**无法编造**（例如 `enum:["FIXED"]`），同时测 required + enum。
 
-**这条缺口只补到"一致"，没补到"证明"。**
+**这条缺口只补到"一致"，没补到"证明"。**（已由 §16.4 用 `enum:["FIXED"]` + 反向 description 重做，结论升级。）
 
 #### 15.2 `enum`：3/3 被压成 `low`，决定性
 
@@ -776,7 +776,7 @@ H2 vs H3 是同 prompt、同 token 的严格对照，唯一差异是 `response_f
 
 **最重要的一条在中间那行**：同一份 `enum:[]` 死路 schema，放 `response_format` 里在编译期直接 400（请求没进推理）；放 `tools` + `strict:true` 里返回 200，输出 `priority:"高"`——枚举是空的，任何值都不合法，它就是违反了。
 
-同一份 schema、同一个 strict 声明，两个通道一个硬拒一个放行。说明 tools 通道在"编译不了"时**不会报错**：要么 fail-open 退化成无约束，要么把空枚举当作"没有枚举约束"。两者对 harness 的影响相同：**`strict:true` 不是"已约束"的凭证，编译失败可以完全静默。**
+同一份 schema、同一个 strict 声明，两个通道一个硬拒一个放行。但 P4b 的区间死路在 tools 通道同样是 400（§16.3），所以这不是整体 fail-open：**空枚举被静默当作"没有枚举约束"处理**，而区间矛盾仍会报错。结论仍是：**`strict:true` 不是"已约束"的凭证，部分坏 schema 的失败是完全静默的。**
 
 **证据限制（三条，都不能省）**：
 
@@ -789,13 +789,158 @@ H2 vs H3 是同 prompt、同 token 的严格对照，唯一差异是 `response_f
 - §11 第一条（B+strict 下 `required`）：**已补**，与"提高出现率"一致，无决定性反例，判别力弱。
 - §11 第二条（B+strict 下 `enum`）：**已补**，3/3 压成 `low`，决定性。
 - §11 第三条（strict 是否只对强制工具生效）：**已补**，否，per-tool 生效，6 次完全分离，决定性。
-- §11 第四条（坏 schema 弱化形态）：**部分补**。`ghost` 与 A 路径一致；`enum:[]` 在 tools 通道 200 且无约束，与 A 路径 400 相反，说明编译失败可能静默 fail-open。`additionalProperties` 那条判别力不足，仍属未测。
+- §11 第四条（坏 schema 弱化形态）：**已补，见 §16.3 三分表**。`ghost` 两通道都是 200 + 静默弱化；区间死路两通道都是 400；`enum:[]` 是唯一例外（A 400 / B 200 且无约束）。`additionalProperties` 那条仍判别力不足。
 
 #### 15.6 对 W3 的影响
 
 1. 每个工具都要显式 `strict:true`，注册表要能检查"有没有漏"——strict 是 per-tool 的。
 2. 客户端校验不能因为 `strict:true` 就降级。strict 只保证"能编译出来的那部分约束"，编译失败是静默的。
-3. 工具 schema 不要放不可满足的约束（空枚举、矛盾区间）。A 路径会 400 让你发现，tools 通道会让你以为生效了。
+3. 工具 schema 不要放不可满足的约束。区间矛盾两条通道都会 400；**空枚举在 tools 通道会被静默当作无约束**（只有 A 路径会 400），这类退化没有任何报错。
+
+### 16. P4b：P4 的加固（2026-10-31，14 次请求）
+
+样本 `samples/day5m/`。三件事：`ghost` / `enum:[]` 各重复 3 次、区间死路补测、`required` 换成不可编造的值重做。
+
+#### 16.1 `ghost` 稳定复现（3/3）
+
+| run | HTTP | 输出 | 本地校验 |
+|---|---|---|---|
+| 1 | 200 | 只有 `title`（整句原文） | `$.ghost 缺失` |
+| 2 | 200 | `title` 里塞了一整个**字符串化的 JSON** | `$.ghost 缺失` |
+| 3 | 200 | 只有 `title` | `$.ghost 缺失` |
+
+3/3 稳定 200 + 缺 ghost，不是单次噪声。
+
+run2 值得单独记：`title` 的值是 `{"title":"产品评审会","time":"2024-明天上午10:00",...,"priority":"高"}` —— 模型把所有信息塞进了唯一允许的字段。这是 `additionalProperties:false` + 只剩一个 `title` 时的**挤压产物**：本地校验通过（`title` 确实是 string），业务上完全不可用。又一个"合法但错误"的形态，与 A 组 H1 的 `202002` 小时同类。
+
+#### 16.2 `enum:[]` 稳定复现（3/3）
+
+3 次全部 200，`priority` 全部是 `"高"`（空枚举下任何值都不合法）。稳定。
+
+#### 16.3 区间死路：tools 通道也 400，但错误消息来自另一层
+
+| 通道 | HTTP | 错误 |
+|---|---|---|
+| A `response_format`（§12.2） | 400 | `Grammar error: Unsatisfiable schema: required property 'duration_hours' is unsatisfiable` |
+| B `tools` + strict（P4b-3） | **400** | `Invalid grammar specification: 'triggers'`，132 / 121 ms |
+
+**这条修正了 §15.4 的解释**：tools 通道不是整体 fail-open。区间死路它也会硬拒，只是错误来自另一个编译阶段（语法规格组装，而不是 vLLM 的 unsatisfiable 文案），消息里甚至没有点名具体字段。
+
+于是坏 schema 的失败形态是**三分表**，不是二分：
+
+| 坏法 | A 路径 | B 路径（strict） |
+|---|---|---|
+| `required` 含 ghost | 200 + 静默弱化 | 200 + 静默弱化 |
+| 区间死路（min > max） | 400 | **400**（消息不同） |
+| `enum: []` | 400 | **200 + 完全无约束** |
+
+**空枚举是唯一表现相反的**：A 路径编译期拒绝，tools 通道把它当作"没有枚举约束"。这比"整体 fail-open"更精确，也更难发现——schema 看起来只是"更严格了一点"，没有任何报错。
+
+#### 16.4 `required`：换成不可编造的值后，2×2 干净分离
+
+设计：`checksum` 的 `enum:["FIXED"]`，description 写"可选字段。除非用户明确要求，否则不要输出本字段"。三项设计同时成立：
+
+- 值不可编造（enum 只有一个值）；
+- 模型没有动机输出（描述明说不要）；
+- 两组只差 `required`。
+
+| 组 | checksum 在 required | 出现 | 值 |
+|---|---|---|---|
+| `b-strict-fixed-in` | 是 | **3/3** | 全部 `"FIXED"` |
+| `b-strict-fixed-out` | 否 | **0/3** | — |
+
+`prompt_tokens` 422 vs 418，只差 `"checksum"` 两项（`required` 数组里的那一项 + properties 里那项本身）。
+
+reasoning 印证两组的行为差异：
+
+- out 组：“optional checksum. User didn't ask for checksum, so **don't include it**.” → 主动省略；
+- in 组：“…description says 可选… Yet it's in required list — **contradiction**. The safest: follow the schema's strict requirement?” → 识别到冲突，选择遵守 required。
+
+**结论**：`required` 是决定字段是否输出的关键变量，且是结构性的（值同时被 enum 锁死为 `FIXED`，说明 enum 也在工作）。两个替代解释都被排除：
+
+1. “模型自己爱填” → out 组 0/3；
+2. “模型随便编一个” → 值只能是 `FIXED`。
+
+仍不能数学证明这是"语法强制"而非"模型选择配合"（in 组的 reasoning 是在权衡后决定遵守），但行为层面已经确定：**不 required 就不填，required 就填，且值不可自由选择**。§15.1 的"判别力弱"到此升级。
+
+#### 16.5 修订清单
+
+- §15.1：`required` 由"只到一致"升级为"2×2 干净分离"（§16.4）。
+- §15.4：把"要么 fail-open"收窄为"空枚举被静默当作无约束；区间死路仍 400"（§16.3）。
+- §15.5 第四条：坏 schema 形态从二分改为三分表。
+- 仍未测：`additionalProperties:false` 的真实强制力（P4-4c 判别力不足）。（已由 §17 补上。）
+
+### 17. P5：`additionalProperties` 的 2×2 + 缺省（2026-10-31，13 次请求）
+
+样本 `samples/day5n/`。
+
+设计动因：P4-4c 判别力不足——模型看到 schema 只允许 `title` 就"自觉"不加额外字段，无法区分"约束生效"与"模型听话"。补两个维度：
+
+- schema 维度：`additionalProperties` 为 `false` / `true` / 不写；
+- 压力维度：默认 prompt / 业务压力 prompt（system 与 user 都说"下游表需要 `location.city` 与 `duration_hours`，缺了整批数据作废"）。
+
+基线是 P5-1 与 P5-2 只差一个布尔值，P5-5 与 P5-2 只差"写不写"。
+
+| 组 | `additionalProperties` | 压力 | 额外键 | 输出特征 |
+|---|---|---|---|---|
+| P5-1 `b-noextra-closed-adverse` | `false` | 有 | **0/3** | run1 把全部信息塞进 `title`；run2/3 只有 `title` |
+| P5-2 `b-noextra-open-adverse` | `true` | 有 | **3/3** | `location` + `duration_hours` + `owner` + `priority` + `start_time`；run3 还自造 `start_time_text` |
+| P5-3 `b-noextra-closed-mild` | `false` | 无 | **0/2** | 只有 `title` |
+| P5-4 `b-noextra-open-mild` | `true` | 无 | **2/2** | `time` / `location`（string）/ `duration` / `owner` / `priority` |
+| P5-5 `b-noextra-unspecified-adverse` | 不写 | 有 | **0/3** | 只有 `title` |
+
+四个格子全部符合"`additionalProperties` 真实执行"的预测，加上缺省组共五格。
+
+**四条结论**：
+
+1. **`false` 真的禁止额外键**。P5-1 的 prompt 明说"缺少 location 或 duration_hours 会导致入库失败"，模型仍 0/3 没加。run1 的处理方式是把全部信息塞进唯一允许的 `title`——这是"**想加但加不进去**"的直接证据，比"它没加"强得多。
+2. **`true` 真的允许额外键，且模型会主动利用**。P5-4 在**没有压力**时也 2/2 加了 `time` / `location` / `duration`。这排除了"模型本来就不想加"这个解释，让 P5-1 的 0/3 变得有力。
+3. **缺省不写等价于 `false`**。P5-5 与 P5-2 是同一个压力 prompt，唯一差异是 `additionalProperties` 从 `true` 改成不写：一个 **3/3 加**、一个 **0/3 加**。OpenAI 对缺省是 400 拒绝，本网关直接按闭合处理——两者都逼你显式写，但失败方式相反（一个当场报错，一个静默变严格）。
+4. **开放对象下字段名不可控**。`open` 组产出 `time`、`location`（string 而非对象）、`duration`、`start_time_text` 四种自造字段名；`closed` 组则把信息挤压进 `title`，得到 `{"title":"产品评审会（明天上午10:00，杭州西湖区，预计2小时，负责人张三，优先级高）"}`。两者都是"合法但不可用"的不同形态：一个结构漂移，一个字段挤压。
+
+**对 W3 的结论**：
+
+- 所有工具的 `parameters` 都要显式写 `additionalProperties:false`。缺省虽然在本网关等价于闭合，但那是网关行为，换供应商可能变成开放。
+- 允许开放对象等于把字段名交给模型即兴发挥，客户端拿到的 `arguments` 无法按固定 schema 消费。
+- 客户端校验要检查"有没有多余键"，不能只检查 `required`。
+
+**证据限制**：
+
+- n=2~3，单一模型。
+- `strict:true` + `additionalProperties:true` 是 OpenAI 非法组合，本网关照样执行（不拒、也不强制闭合），再次印证"不要拿 OpenAI 规则推断本网关"。
+- P5-5 与 P5-2 的工具名不同（`emit_event_unspecified` vs `emit_event_open`），无法 100% 排除命名影响，但 description 与压力 prompt 完全一致。
+- 未测：`additionalProperties` 写成带 `properties` 的 schema 对象（而非布尔）时的行为。
+
+### 18. P6：C 路线的 n=10 对照与格式稳定性（2026-10-31，25 次请求）
+
+样本 `samples/day5o/`。
+
+背景：C2 此前只有 n=3、A5b 只有 n=1，"json_object 有没有额外价值"这个问题从未被严肃测过。
+
+**先更正一处对照错位**：C2 的正确对照是 **A5b**，不是 H3。两者 prompt 逐字相同（`TASK` + `SCHEMA_TEXT` + 同一句禁令），唯一差异是 `response_format:{type:"json_object"}`。H3 用的是 `HARD_SCHEMA_TEXT`（嵌套 `address` 必填、6 值枚举、`minimum:100`），与 C2 差的是 schema 难度，不是 `json_object`。
+
+**代码修正**：C2 与 A5b 此前都没写 `intentSchema`，靠 `sentSchema()` 回退到 `EVENT_SCHEMA`。结果虽然正确（`SCHEMA_TEXT` 就是 `EVENT_SCHEMA` 的文字版），但那是"巧合正确"——`EVENT_SCHEMA` 一改，两个场景的尺子会静默跟着变。现已显式声明。另新增 `rawContent` / `codeFenceStripped` 两个观测字段：markdown 被剥掉后就看不到污染了，要测格式稳定性必须留原始文本。
+
+| 组 | `response_format` | 格式禁令 | 通过 | 污染 | prompt tokens | completion | 耗时 |
+|---|---|---|---|---|---|---|---|
+| P6-1 `c-prompt-only-r10` | 无 | 有 | **10/10** | **0** | 198 | 169–269 | 1.7–3.3s |
+| P6-2 `a-json-object-r10` | `json_object` | 有 | **10/10** | **0** | 198 | 183–542 | 1.9–5.8s |
+| P6-3 `c-prompt-only-naked` | 无 | **无** | **5/5** | **0** | 183 | 252–364 | 2.6–3.8s |
+
+**三条结论，两条是负面的**：
+
+1. **`json_object` 在文字 schema 充足时没有可观测的额外价值**。两组都 10/10 合法、零污染，`prompt_tokens` 完全相同（198），completion 与延迟分布重叠。A5b 唯一的离群值（542 tokens / 5.8s）在 C2 的思考波动范围内也有同量级样本（C2 run1 3315ms）。
+2. **格式禁令也没有可观测价值**。C3 去掉"只输出 JSON，不要解释、不要 markdown"后仍然 5/5 干净，只少了 15 个 prompt token。也就是说本模型**默认就只吐 JSON**，那句禁令在这个模型上是冗余的。
+3. **所以 C 路线的风险是"条件性"的，不是"结构性"的**。§5.4 的 C 组（只说"输出 JSON"、不给字段名）3/3 中文键，与这里 10/10 的差别不是"模型能力"，而是"prompt 里有没有给足信息"。C 的真实定位不是"纯 prompt 做不对"，而是"**没有服务端强制时，正确性完全押在 prompt 与模型遵循能力上**"。本模型 + 6 字段 schema 押中了，没有保证。
+
+**证据限制（这次尤其重要，因为没有测出差异）**：
+
+- 单一模型（DeepSeek-V4.1-Flash）。"格式禁令冗余""json_object 无价值"都可能是**这个模型太规矩**导致的，换一个小模型/不擅长指令遵循的模型，两条都可能翻转。这正是 A 路径的隐性优势（grammar 不依赖模型读文字），但本实验**证明不了**它，因为对照组没掉点。
+- 0/10 的 95% 置信上界约 **26%**（3/10 规则反向），要说"污染率 <1%"需要 300 次以上。n=10 只够说"没观察到"，不够说"不会发生"。
+- C3 只有 n=5，且仍给了完整文字 schema；真正"纯 prompt"的自然形态（连字段名都不给）是早先的 C 组，3/3 失败，但那混了"信息不足"这个变量。
+- 未测：换模型重复以上三组。这是唯一能把"模型规矩"与"路线性质"分开的办法。
+
+**对选型的修订**：`json_object` 在本网关 + 本模型上是**零收益的中间态**——它既不像 `json_schema` 那样提供结构保证，也不比纯 prompt 更省。要用就用两端：要么 A（结构保证 + 零 prompt 成本），要么 C（任何网关可用，把成本押在 prompt 与模型上）。§5.3 的"C 只作降级"保持不变，但理由要补一条：**降级到 C 时，格式稳定性不是靠 `json_object` 兜的，只能靠客户端校验 + 重试。**
 
 ---
 

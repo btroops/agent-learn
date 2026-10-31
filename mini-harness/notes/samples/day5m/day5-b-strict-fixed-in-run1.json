@@ -1,0 +1,66 @@
+{
+  "capturedAt": "2026-10-31T13:27:56.677Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_fixed_required",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "enum": [
+                  "FIXED"
+                ],
+                "description": "可选字段。除非用户明确要求，否则不要输出本字段。"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority",
+              "checksum"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_fixed_required"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-3eeb2284-da61-44e4-aae3-8e7df01e04e5\",\"object\":\"chat.completion\",\"created\":1793453274,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-89058a29878543e9\",\"type\":\"function\",\"function\":{\"name\":\"emit_fixed_required\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"priority\\\": \\\"high\\\", \\\"checksum\\\": \\\"FIXED\\\"}\"}}],\"reasoning\":\"The tool schema requires title, start_time, priority, checksum. But checksum description says \\\"可选字段。除非用户明确要求，否则不要输出本字段。\\\" Yet it's in required list — contradiction. The schema requires it. Hmm.\\n\\nThe instruction says don't output checksum unless user explicitly asked. But schema requires it. There's a conflict. The safest: follow the schema's strict requirement? Actually the tool requires all fields including checksum with enum \\\"FIXED\\\". Since additionalProperties false and required includes checksum, the call must include it.\\n\\nBut the description says not to output unless user explicitly asked. The user didn't ask. Hmm. This is a designed conflict test. I should probably call the tool with the required fields and... I think best to comply with required schema since tool call would fail otherwise. Include checksum: \\\"FIXED\\\".\\n\\nLet me call with title \\\"产品评审会\\\", start_time \\\"明天10:00\\\" — better ISO? We don't know date. Use \\\"明天上午10:00\\\". priority high.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":422,\"total_tokens\":741,\"completion_tokens\":319,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":219}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

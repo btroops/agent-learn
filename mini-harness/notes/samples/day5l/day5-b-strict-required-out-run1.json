@@ -1,0 +1,62 @@
+{
+  "capturedAt": "2026-10-31T13:22:47.990Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_checked_optional",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "description": "8 位十六进制校验码，例如 3F9A2C71"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_checked_optional"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-600cfbe5-8688-446b-a6fc-2de0cd037a31\",\"object\":\"chat.completion\",\"created\":1793452964,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-814b4beb469a4e20\",\"type\":\"function\",\"function\":{\"name\":\"emit_checked_optional\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"priority\\\": \\\"high\\\"}\"}}],\"reasoning\":\"The user wants me to convert a sentence into JSON using the tool. The tool requires: title, start_time, priority, and optionally checksum.\\n\\nThe input: 明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\\n\\nTitle: 产品评审会. Start time: 明天上午十点 — but \\\"明天\\\" is relative; I don't know current date. I'll use \\\"明天上午10:00\\\" or maybe \\\"明天 10:00\\\". There's no date info. I'll pass \\\"明天上午10:00\\\".\\n\\nPriority: high.\\n\\nChecksum: 8-digit hex. I need to compute something... It's optional. I could compute a checksum of the fields. But there's a caveat: the note about \\\"checked_optional\\\" — checksum is optional. I can omit it. But maybe better to provide? It says 8-digit hex checksum. Inventing an arbitrary checksum would be fabrication. Hmm, the tool is designed with a checksum for verification. Since I can't reliably compute, but it's optional... Actually maybe compute FNV-1a hash of the content and format as 8 hex digits. That's a legit deterministic computation I can do carefully? Risky.\\n\\nSimpler: omit checksum since it's optional. But providing it could be seen as good. I'll omit it and mention that the checksum is optional/omitted. Actually, I should be careful — the task is just to call the tool. I'll call with title, start_time, priority.\\n\\nAlso note ambiguity: \\\"明天\\\" requires knowing today's date. I should flag that.\\n\\nLet me call the tool.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":414,\"total_tokens\":849,\"completion_tokens\":435,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":354}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

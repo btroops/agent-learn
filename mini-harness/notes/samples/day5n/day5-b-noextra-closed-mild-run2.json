@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-10-31T13:30:04.253Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_closed",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_closed"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-15f3297d-39b0-454d-ba68-159d7052543e\",\"object\":\"chat.completion\",\"created\":1793453402,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-ad4d39b35e820074\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_closed\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\"}\"}}],\"reasoning\":\"The tool only accepts a \\\"title\\\" parameter. I need to call it. But the schema is limited. I should call with a title. However the user wants full JSON conversion. The tool only takes title. I'll call the tool with an appropriate title.\\n\\nLet me call emit_event_closed with title like \\\"产品评审会\\\". But maybe I should include details in title? The tool schema only allows title. I'll call it once.\\n\\nPerhaps I can call it with a comprehensive title. Let's do that.\\n\\nActually, better: call the tool with title containing the key info. Then report the result.\\n\\nThe instruction says make independent calls in same block. Just one call.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":342,\"total_tokens\":523,\"completion_tokens\":181,\"prompt_tokens_details\":{\"cached_tokens\":256,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":138}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

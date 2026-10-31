@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-10-31T13:23:43.337Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_ghost",
+          "description": "探测 required 指向不存在字段时的编译行为",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "ghost"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_ghost"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-3572a871-8268-4ce6-b5f8-e15a0a2c013a\",\"object\":\"chat.completion\",\"created\":1793453021,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-852fbd78096b50d4\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_ghost\",\"arguments\":\"{\\\"title\\\": \\\"明天上午十点在杭州西湖区开产品评审会\\\"}\"}}],\"reasoning\":\"The tool requires \\\"ghost\\\" parameter which doesn't exist in properties. Let me call it and see what happens — the task says \\\"请调用工具完成转换\\\". The tool is designed to probe required pointing to non-existent field. I should call it to observe the compilation behavior.\\n\\nLet me call with title and ghost.\\n\\nWhat should ghost be? It's required but not in properties. With additionalProperties: false and strict: true, providing \\\"ghost\\\" may be rejected. But required demands it. Let me just try calling with both.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":348,\"total_tokens\":511,\"completion_tokens\":163,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":110}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

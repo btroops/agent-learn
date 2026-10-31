@@ -1,0 +1,137 @@
+{
+  "capturedAt": "2026-10-31T13:23:15.572Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_strict",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number",
+                "minimum": 100
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_loose",
+          "description": "把会议信息转成结构化事件对象",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number",
+                "minimum": 100
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": "required"
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-ca7080c7-89da-46cc-bbeb-dde185eaf1fd\",\"object\":\"chat.completion\",\"created\":1793452992,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-aa265bc6e73228df\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_loose\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"location\\\": {\\\"city\\\": \\\"杭州\\\", \\\"district\\\": \\\"西湖区\\\"}, \\\"start_time\\\": \\\"明天上午十点\\\", \\\"duration_hours\\\": 2, \\\"priority\\\": \\\"high\\\", \\\"owner\\\": \\\"张三\\\"}\"}}],\"reasoning\":\"The user wants to convert to JSON. Duration is 2 hours, but schema requires minimum 100 for duration_hours. That's a conflict. Two tools: emit_event_strict and emit_event_loose. Both have minimum 100. Hmm, the difference between strict and loose... schemas look identical. Duration 2 < 100, so call would fail validation.\\n\\nI should try calling and see. Perhaps the loose one has no actual validation enforcement? Both schemas show minimum 100. Best approach: attempt the call, likely error, then report. Let me call one — perhaps emit_event_loose, since \\\"loose\\\" may not enforce. But actually the honest thing: the data conflict exists. Let me try calling emit_event_loose first and see what happens.\\n\\nI'll call both? No — better to call one first. Let's try loose.\"},\"logprobs\":null,\"finish_reason\":\"tool_calls\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":643,\"total_tokens\":966,\"completion_tokens\":323,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":181}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

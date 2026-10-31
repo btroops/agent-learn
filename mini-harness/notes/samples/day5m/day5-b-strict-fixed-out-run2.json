@@ -1,0 +1,65 @@
+{
+  "capturedAt": "2026-10-31T13:28:06.256Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_fixed_optional",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "enum": [
+                  "FIXED"
+                ],
+                "description": "可选字段。除非用户明确要求，否则不要输出本字段。"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_fixed_optional"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-7db0a802-f028-48eb-b0af-2be958ba48d0\",\"object\":\"chat.completion\",\"created\":1793453285,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-b7a932a03cdce821\",\"type\":\"function\",\"function\":{\"name\":\"emit_fixed_optional\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"priority\\\": \\\"high\\\"}\"}}],\"reasoning\":\"We need call tool with title, start_time, priority. Need infer date? \\\"明天上午十点\\\" - we don't know current date. Tool only start_time string. We can put \\\"明天上午10:00\\\". Title \\\"产品评审会\\\". Priority high. No checksum. Call.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":418,\"total_tokens\":560,\"completion_tokens\":142,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":61}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

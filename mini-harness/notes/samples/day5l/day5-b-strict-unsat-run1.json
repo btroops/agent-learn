@@ -1,0 +1,79 @@
+{
+  "capturedAt": "2026-10-31T13:23:45.833Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_unsat",
+          "description": "把会议信息转成结构化事件对象",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number"
+              },
+              "priority": {
+                "type": "string",
+                "enum": []
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_unsat"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-a336b589-0179-433c-9ffe-dbd245600cf6\",\"object\":\"chat.completion\",\"created\":1793453023,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-aa905dab2045f121\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_unsat\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"location\\\": {\\\"city\\\": \\\"杭州\\\", \\\"district\\\": \\\"西湖区\\\"}, \\\"start_time\\\": \\\"明天上午十点\\\", \\\"duration_hours\\\": 2, \\\"priority\\\": \\\"高\\\", \\\"owner\\\": \\\"张三\\\"}\"}}],\"reasoning\":\"The tool schema has \\\"priority\\\" with enum: [] — empty enum, meaning no valid value. So calling the tool with priority \\\"高\\\" would fail validation. This is an unsat scenario. I should attempt the call? The instruction says call the tool. But the enum is empty, so any value fails. Let me try calling it to demonstrate, then report the issue.\\n\\nActually the best approach: attempt the call, observe error, then explain. Let me do the call with priority \\\"高\\\".\\n\\nHmm, but calling with invalid arg may be rejected. Let's try — that's the honest way to verify.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":451,\"total_tokens\":719,\"completion_tokens\":268,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":126}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

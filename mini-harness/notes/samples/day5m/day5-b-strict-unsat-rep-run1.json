@@ -1,0 +1,79 @@
+{
+  "capturedAt": "2026-10-31T13:27:38.224Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_unsat",
+          "description": "把会议信息转成结构化事件对象",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number"
+              },
+              "priority": {
+                "type": "string",
+                "enum": []
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_unsat"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-43a67a25-5f3e-4fa7-a6ce-74280ff759b5\",\"object\":\"chat.completion\",\"created\":1793453254,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-b25cbb3eb2c59f50\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_unsat\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"location\\\": {\\\"city\\\": \\\"杭州\\\", \\\"district\\\": \\\"西湖区\\\"}, \\\"start_time\\\": \\\"明天10:00\\\", \\\"duration_hours\\\": 2, \\\"priority\\\": \\\"高\\\", \\\"owner\\\": \\\"张三\\\"}\"}}],\"reasoning\":\"The tool schema has \\\"priority\\\" with enum: [] — an empty enum, meaning no valid value. So the call is unsatisfiable. I should attempt? The tool name is emit_event_unsat suggesting unsat. I should explain that the priority field cannot be filled.\\n\\nI should call the tool? It would fail. Better to explain the schema constraint prevents it. Let me try calling and see — but realistically I should report the issue. The instruction says call the tool, don't answer directly. But the tool cannot accept any priority value. Honest response: explain the schema blocks it.\\n\\nI'll attempt the call to demonstrate? Actually making a call with an invalid enum value is a schema violation. The right move is to report the blocker clearly.\\n\\nLet me call it once with priority \\\"高\\\" to show the failure, then report. Hmm, but tool calls with invalid params will error. That's fine—it demonstrates. But the guidance: don't fabricate. I think best answer: explain unsatisfiable constraint and ask for clarification. I'll attempt the call anyway to be faithful to instruction... I'll do the call with \\\"高\\\" and it should return an error, then I explain.\\n\\nActually predictably it errors; a cleaner approach is to directly state the blocker. But the user explicitly asked to call the tool. I'll make the call; if it errors, report honestly.\\n\\nAlso I can note other ambiguities: \\\"明天上午十点\\\" needs a date — relative date unknown. But the main blocker is the empty enum.\\n\\nI'll make the call.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":451,\"total_tokens\":914,\"completion_tokens\":463,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":321}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

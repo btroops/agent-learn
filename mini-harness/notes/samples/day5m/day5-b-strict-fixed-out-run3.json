@@ -1,0 +1,65 @@
+{
+  "capturedAt": "2026-10-31T13:28:08.804Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_fixed_optional",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "enum": [
+                  "FIXED"
+                ],
+                "description": "可选字段。除非用户明确要求，否则不要输出本字段。"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_fixed_optional"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-409fdda9-2a59-4e62-b150-f46114ab646e\",\"object\":\"chat.completion\",\"created\":1793453286,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-b0c3e538c5fd085c\",\"type\":\"function\",\"function\":{\"name\":\"emit_fixed_optional\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"priority\\\": \\\"high\\\"}\"}}],\"reasoning\":\"We need answer must call tool, not direct answer. Need extract title, start_time, priority. \\\"明天上午十点\\\" relative — need date? We don't know current date. We can represent \\\"明天上午10:00\\\" perhaps. Tool schema start_time string. Title \\\"产品评审会\\\". Priority high. No checksum because optional and user didn't request. Need not include extra fields like location or owner, schema disallows additional. So call emit_fixed_optional with title 产品评审会, start_time 明天上午10:00, priority high. Need maybe \\\"杭州西湖区产品评审会\\\"? The meeting title is 产品评审会, location omitted due schema. Could include location in title? Better not. But user asks \\\"把这句话转成 JSON\\\", tool only has fields. We should use available. Need not mention missing fields. Tool call.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":418,\"total_tokens\":679,\"completion_tokens\":261,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":180}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

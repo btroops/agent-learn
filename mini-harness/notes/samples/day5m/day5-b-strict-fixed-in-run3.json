@@ -1,0 +1,66 @@
+{
+  "capturedAt": "2026-10-31T13:28:03.834Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_fixed_required",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "enum": [
+                  "FIXED"
+                ],
+                "description": "可选字段。除非用户明确要求，否则不要输出本字段。"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority",
+              "checksum"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_fixed_required"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-74b7f550-3b7e-40d6-b59d-c281b63117b3\",\"object\":\"chat.completion\",\"created\":1793453278,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-a74a404b4919f783\",\"type\":\"function\",\"function\":{\"name\":\"emit_fixed_required\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会（杭州西湖区）\\\", \\\"start_time\\\": \\\"明天上午10:00\\\", \\\"priority\\\": \\\"high\\\", \\\"checksum\\\": \\\"FIXED\\\"}\"}}],\"reasoning\":\"We need answer Chinese. Need call tool. User asks convert to JSON, tool schema has title, start_time, priority, checksum required. But checksum enum FIXED and description says optional field, unless user explicitly requires do not output. Yet schema requires checksum. Conflict. Need comply tool schema? The tool requires checksum, but instructions say do not output unless explicitly. User did not request checksum. If call tool, must include checksum? Schema required. Could call with all fields including FIXED, but violates \\\"do not output\\\". Alternatively maybe refuse? We need \\\"请调用工具完成转换，不要直接回答.\\\" We should call tool. Need decide params. Tool only supports title/start_time/priority/checksum, no duration or owner. Need title include product review meeting. start_time relative \\\"明天上午十点\\\" no date given; can use \\\"明天上午10:00\\\" or ISO? likely string. priority high. checksum? Tool requires. But instruction says optional field, unless explicit. Since schema requires, impossible to fulfill both. We should perhaps call with checksum FIXED because required by tool. But perhaps hidden test expects not include checksum? Yet function call validation likely requires it. Need include. Maybe maybe checksum field is a trap; system says don't output unless explicitly. Higher priority than tool schema? Tool definition from developer says required. Description says optional. Contradiction within same tool. To call successfully, include. Could mention? User says don't directly answer; final after tool can be minimal. We can call with title \\\"产品评审会\\\", start_time \\\"明天上午10:00\\\", priority \\\"high\\\", checksum \\\"FIXED\\\". But title could include location? \\\"在杭州西湖区开产品评审会\\\" title maybe \\\"产品评审会（杭州西湖区）\\\". start_time should include timezone? No date. Use \\\"明天上午10:00\\\". The schema expects string. Let's call. Need no parallel.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":422,\"total_tokens\":936,\"completion_tokens\":514,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":409}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

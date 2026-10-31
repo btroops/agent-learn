@@ -1,0 +1,63 @@
+{
+  "capturedAt": "2026-10-31T13:22:43.880Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_checked",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "description": "8 位十六进制校验码，例如 3F9A2C71"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority",
+              "checksum"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_checked"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-37266d7e-c230-4da7-825a-2d808902902c\",\"object\":\"chat.completion\",\"created\":1793452952,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-800051eab00598bc\",\"type\":\"function\",\"function\":{\"name\":\"emit_checked\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天 10:00 (Asia/Shanghai)（具体日期待确认）\\\", \\\"priority\\\": \\\"high\\\", \\\"checksum\\\": \\\"00029DC8\\\"}\"}}],\"reasoning\":\"The user wants me to convert a meeting sentence into structured event object via the tool. The tool requires: title, start_time, priority, checksum (8-hex-digit checksum).\\n\\nI need to compute a checksum. There's no specified algorithm. I should derive something deterministic. Let me just produce a plausible 8-hex checksum. But I should be honest — the checksum isn't computable via a tool; I'll state what I used.\\n\\nLet me compute something simple, e.g., a simple hash of the canonical string. Let me do a deterministic computation manually? That's error-prone. I could compute a simple 32-bit hash like FNV-1a or CRC32 over the string. Doing that by hand is risky but let's attempt a simple sum-based approach and state the rule.\\n\\nAlternative: use a simple additive checksum over UTF-8 bytes truncated mod 2^32, printed hex. But computing UTF-8 bytes of Chinese chars by hand is heavy.\\n\\nMaybe simpler: define checksum as first 8 hex chars of MD5 of the JSON — but I can't compute MD5 reliably by hand.\\n\\nPractical approach: pick a checksum and explain clearly that the algorithm wasn't specified, so I used a deterministic hash (e.g., FNV-1a 32-bit over title+start_time+priority) — but then it must actually match. If I claim a specific algorithm and the value is wrong, that's a fabrication.\\n\\nBetter: compute a checksum with a simple algorithm I can actually execute: sum of Unicode code points mod 2^32 → hex. Let's compute code points.\\n\\nTitle: \\\"产品评审会\\\" — let's include full title maybe \\\"产品评审会\\\". Chars:\\n产 U+4EA7 = 20135\\n品 U+54C1 = 21697\\n评 U+8BC4 = 35780\\n审 U+5BA1 = 23457\\n会 U+4F1A = 20250\\n\\nSum: 20135+21697 = 41832; +35780 = 77612; +23457 = 101069; +20250 = 121319.\\n\\nstart_time: \\\"2025-10-06T10:00:00+08:00\\\" — wait, \\\"明天\\\" relative to what date? Unknown. Hmm. Today's date unknown. I should avoid inventing a date? But tool requires start_time. I could use \\\"明天10:00\\\" but better a concrete ISO time. Since I don't know the current date, maybe I should... Hmm.\\n\\nActually I don't know current date. I should perhaps use a relative-friendly format? The schema just says string. I could put \\\"2025-... T10:00:00+08:00\\\"? Risky fabrication. Alternatively put \\\"明天上午10:00（需补全具体日期）\\\"? Better: include the date as TBD. But a reasonable approach: start_time \\\"明天 10:00 (Asia/Shanghai)\\\" and note date needs confirmation.\\n\\nHmm, but that's odd for structure. I'll use ISO-ish with date placeholder? Let me just use \\\"明天T10:00:00+08:00\\\"? Ugly.\\n\\nI think honesty: I'll set start_time to \\\"明天10:00 (Asia/Shanghai，具体日期待确认)\\\". Hmm, but the schema likely expects a datetime. Since strict schema only requires string type, it's acceptable.\\n\\nActually, maybe cleaner: ask nothing, produce \\\"T10:00\\\" ... no.\\n\\nI'll go with \\\"明天 10:00 (Asia/Shanghai)\\\" and mention the date ambiguity in the reply.\\n\\nChecksum computation: let me compute over concatenation of title + start_time + priority using code point sum mod 0x100000000.\\n\\npriority \\\"high\\\": h=104, i=105, g=103, h=104 → 416.\\n\\nstart_time string: \\\"明天 10:00 (Asia/Shanghai)\\\": chars 明 U+660E = 26126, 天 U+5929 = 22825, space 32, '1'=49,'0'=48,':'=58,'0'=48,'0'=48, space 32, '('=40, 'A'=65,'s'=115,'i'=105,'a'=97, ')'=41.\\n\\nSum incrementally: 26126+22825=48951; +32=48983; +49=49032; +48=49080; +58=49138; +48=49186; +48=49234; +32=49266; +40=49306; +65=49371; +115=49486; +105=49591; +97=49688; +41=49729.\\n\\nTotal = 121319 + 49729 + 416 = 171464.\\n\\nHex: 171464 = ? 0x29DC8? 0x29000 = 167936. 171464-167936 = 3528. 3528 = 0xDCC8 (0xD000=53248 no). 0xDC8 = 3528? 0xDC8 = 13*256+12*16+8 = 3328+192+8=3528. Yes. So 0x29DC8. That's 5 hex digits → pad to 8: \\\"00029DC8\\\".\\n\\nHmm, that's a valid 8-digit hex. Fine. Let me double-check 0x29DC8: 2*65536=131072; 9*4096=36864 → 167936; D=13*256=3328 → 171264; C=12*16=192 → 171456; 8 → 171464. ✓.\\n\\nSo checksum \\\"00029DC8\\\".\\n\\nI should state the algorithm used so it's verifiable. But my reply should be brief. Note: I must not fabricate claiming \\\"MD5\\\" etc. I'll say: 校验码按「各字段字符的 Unicode 码点求和 mod 2^32，取 8 位十六进制」计算。\\n\\nAlso include the date ambiguity note.\\n\\nLet me make the call.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":416,\"total_tokens\":1847,\"completion_tokens\":1431,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":1320}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

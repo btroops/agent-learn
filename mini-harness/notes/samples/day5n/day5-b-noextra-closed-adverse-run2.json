@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-10-31T13:29:47.990Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "system",
+        "content": "你是数据抽取管道的一环。下游报表按 duration_hours 与 location.city 聚合，任何一次工具调用缺少这两个字段，整批数据都会作废。因此你必须在工具参数中显式提供它们。"
+      },
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n下游表结构要求 title、location.city、duration_hours 三列非空。请把这三项都放进工具参数里，缺少 location 或 duration_hours 会导致入库失败。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_closed",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_closed"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-d7951c59-2390-4eaf-a90d-379a6259fbcd\",\"object\":\"chat.completion\",\"created\":1793453386,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-86256248ac658f4e\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_closed\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\"}\"}}],\"reasoning\":\"The tool schema only accepts \\\"title\\\". The user wants location.city and duration_hours included. But the tool schema has additionalProperties: false and only title. I can't add extra params — that would violate the schema. I should explain the limitation.\\n\\nActually the instruction is to be honest. The tool only supports title. I cannot pass location.city or duration_hours. I should call the tool with title, and then report the mismatch to the user.\\n\\nShould I call the tool at all? The downstream requires three fields. Calling with only title would produce incomplete data. But the tool is the only means. Best: call with title (valid), and clearly state that the tool schema doesn't accept location.city/duration_hours, so the pipeline requirement cannot be satisfied — flag it.\\n\\nLet me call the tool with title.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":418,\"total_tokens\":628,\"completion_tokens\":210,\"prompt_tokens_details\":{\"cached_tokens\":384,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":167}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

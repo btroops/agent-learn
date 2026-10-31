@@ -295,7 +295,7 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 
 **入口校验仍然缺位**：P0-2 用 `strict:true` + 故意缺 `additionalProperties` 的 schema，返回 **200**。也就是说网关不在入口按 OpenAI 元规则拒绝，坏 schema 会被直接交给编译器或回退——与 A3/A4 的表现一致。
 
-【待验证】B + `strict:true` 下 `required` / `enum` 是否同样生效（目前只测了 `minimum`）；以及 `strict` 是否只对 `tool_choice` 强制指定的那个工具生效。
+**补测（P4，2026-10-31，见 devlog §15）**：B + `strict:true` 下 `enum` 同样强制（3/3 被压成 `low`）；`required` 与"提高出现率"一致（3/3 vs 1/3）但没有决定性反例；**`strict` 按工具声明生效**，不是只对被 `tool_choice` 点名的那个生效——6 次双工具对照完全按工具分界（strict 工具 211/200/202，loose 工具 2/2/2）。所以注册表里每个工具都必须各自写 `strict:true`。
 
 ### 5.6 大 schema 的编译开销：约 20ms，别把建连当编译
 
@@ -322,3 +322,37 @@ H2/H3 是同 prompt、同 194 prompt tokens，唯一差异是 `response_format`�
 | `json_object`（无信息） | 0/5 | 195–265 | 1.9–2.5s |
 
 结论：文字 schema 不是"做不对"，而是**贵**；机器 schema 的收益是零 prompt 成本 + 结构保证 + 低延迟，不是正确率。两者都会产出"合法但语义错"的值（grammar 组出现 `202002` 小时，文字组用空 `address` 占位）。详见 devlog §14。
+
+### 5.9 `strict:true` 不是"已约束"的凭证
+
+坏 schema 的失败形态是三分表，不是"坏就报错"（P4/P4b，devlog §15.4 / §16.3）：
+
+| 坏法 | A `response_format` | B `tools` + `strict:true` |
+|---|---|---|
+| `required` 含不存在的字段 | 200 + 静默弱化 | 200 + 静默弱化 |
+| 区间死路（`minimum:100` + `maximum:1`） | 400 | **400**（消息不同） |
+| `enum: []` | 400 | **200 + 完全无约束** |
+
+**空枚举是唯一表现相反的**：A 路径编译期拒绝，tools 通道把它当作"没有枚举约束"，输出 `priority:"高"` 且没有任何报错。schema 看起来只是"更严格了一点"。
+
+所以 harness 不能把 `strict:true` 当编译成功的凭证：客户端校验必须保留，且"注册表里每个工具都写了 strict"需要一项显式检查。另外 `required` 已实测为结构性约束（不在 required 时 0/3 输出，在 required 时 3/3 且值被 enum 锁死，见 devlog §16.4）。
+
+**`additionalProperties` 双向生效**（P5，devlog §17）：同一压力 prompt 下，`false` 组 0/3 加额外键（模型改把信息塞进 `title`），`true` 组 3/3 加；缺省不写等价于 `false`。开放对象下模型会自造 `time` / `duration` / `start_time_text` 这类字段名，所以所有工具参数都应显式写 `false`，客户端校验要查"有没有多余键"而不只是 `required`。
+
+### 5.10 C 路线的真实边界：风险是条件性的（P6，devlog §18）
+
+三组同族对照，prompt 与 schema 都对齐：
+
+| 组 | `response_format` | 格式禁令 | 通过 | 污染 | prompt tokens |
+|---|---|---|---|---|---|
+| C2 纯 prompt + 文字 schema | 无 | 有 | 10/10 | 0 | 198 |
+| A5b 同上 + `json_object` | `json_object` | 有 | 10/10 | 0 | 198 |
+| C3 同上，去掉禁令 | 无 | 无 | 5/5 | 0 | 183 |
+
+1. **`json_object` 在文字 schema 充足时没有可观测的额外价值**：同 prompt、同 token、同为 10/10。
+2. **格式禁令在当前模型上冗余**：去掉后 5/5 仍干净，模型默认只吐 JSON。
+3. **但这两条都是单模型负面结果**。0/10 的 95% 置信上界约 26%，且"模型太规矩"与"路线本身可靠"无法区分。换一个不擅长长指令遵循的模型，两条都可能翻转——A 的 grammar 不依赖模型读文字，这是它的隐性优势，本实验证明不了。
+
+**C 的正确定位**：不是"纯 prompt 做不对"，而是"**没有服务端强制时，正确性完全押在 prompt 与模型遵循能力上**"。§5.4 的 C 组 3/3 失败（中文键）是"信息不足"，不是"路线不可行"。
+
+**选型**：`json_object` 是零收益中间态——既无 `json_schema` 的结构保证，也不比纯 prompt 省。要么 A，要么 C。降级到 C 时，格式稳定性不能指望 `json_object` 兜底，只能靠客户端校验 + 重试。

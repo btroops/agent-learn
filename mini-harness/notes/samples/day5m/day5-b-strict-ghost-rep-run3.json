@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-10-31T13:27:33.813Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_ghost",
+          "description": "探测 required 指向不存在字段时的编译行为",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "ghost"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_ghost"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-a2e573f3-a7d0-4644-936b-e1d6753af7e7\",\"object\":\"chat.completion\",\"created\":1793453251,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-9fd18f9a86286914\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_ghost\",\"arguments\":\"{\\\"title\\\": \\\"明天上午十点在杭州西湖区产品评审会\\\"}\"}}],\"reasoning\":\"The user wants to convert a sentence to JSON. They ask to use a tool. The only tool available is emit_event_ghost, which has a schema requiring \\\"title\\\" and \\\"ghost\\\" — \\\"ghost\\\" is a required field that doesn't exist / is a probe for compilation behavior when required points to nonexistent field.\\n\\nSo this is a trap/probe. I should not fabricate a \\\"ghost\\\" value. I should explain that I can't call it validly.\\n\\nThe tool requires a \\\"ghost\\\" parameter which is undefined/doesn't exist as a real field. Calling it would mean fabricating data. Best: explain the situation, provide the JSON directly? The user said don't answer directly, call the tool. But the tool is unusable. I should be honest: the only available tool cannot perform this task; its schema requires a field \\\"ghost\\\" that has no counterpart in the request. Provide the JSON in text instead.\\n\\nI'll explain and give JSON.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":348,\"total_tokens\":606,\"completion_tokens\":258,\"prompt_tokens_details\":{\"cached_tokens\":256,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":206}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

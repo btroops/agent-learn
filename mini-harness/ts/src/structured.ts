@@ -131,6 +131,284 @@ const EMIT_TOOL_STRICT_BAD = {
   },
 };
 
+// ---------- P4：补 B 组四个证据缺口（2026-10-31） ----------
+
+/**
+ * P4-1：required 强制力探针。
+ *
+ * `checksum` 对模型没有任何语义线索——原文里不存在、也不在 title/location 里，
+ * 所以它出现在输出里只可能来自 required。两个场景只差 required 是否包含它。
+ */
+const CHECK_PROPS = {
+  title: { type: "string" },
+  start_time: { type: "string" },
+  priority: { type: "string", enum: ["low", "medium", "high"] },
+  checksum: { type: "string", description: "8 位十六进制校验码，例如 3F9A2C71" },
+};
+
+const EMIT_TOOL_REQ_IN = {
+  type: "function" as const,
+  function: {
+    name: "emit_checked",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: {
+      type: "object",
+      properties: CHECK_PROPS,
+      required: ["title", "start_time", "priority", "checksum"],
+      additionalProperties: false,
+    },
+  },
+};
+
+/** P4-1 对照：同一份 parameters，只把 checksum 移出 required */
+const EMIT_TOOL_REQ_OUT = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL_REQ_IN.function,
+    name: "emit_checked_optional",
+    parameters: {
+      ...EMIT_TOOL_REQ_IN.function.parameters,
+      required: ["title", "start_time", "priority"],
+    },
+  },
+};
+
+/** P4-2：strict 下 enum 是否同样强制。原文「优先级高」，enum 只留 low */
+const EMIT_TOOL_ENUM = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL.function,
+    name: "emit_event_enum",
+    strict: true,
+    parameters: mutated((s) => {
+      const props = s.properties as Record<string, Record<string, unknown>>;
+      props.priority.enum = ["low"];
+    }),
+  },
+};
+
+/**
+ * P4-3：同一请求内两个工具，parameters 完全相同，只差 strict。
+ * tool_choice:"required" 让模型自己选，被选中那个的输出就能回答
+ * "strict 是按工具生效，还是按请求生效"。
+ */
+const PERTOOL_PARAMS = mutated((s) => {
+  const props = s.properties as Record<string, Record<string, unknown>>;
+  props.duration_hours.minimum = 100;
+});
+
+const TOOL_STRICT_SIDE = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_strict",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: PERTOOL_PARAMS,
+  },
+};
+
+const TOOL_LOOSE_SIDE = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_loose",
+    description: "把会议信息转成结构化事件对象",
+    parameters: PERTOOL_PARAMS,
+  },
+};
+
+/** P4-4a：required 指向不存在的 ghost（A 路径同样构造是 200 + 静默弱化） */
+const EMIT_TOOL_GHOST = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_ghost",
+    description: "探测 required 指向不存在字段时的编译行为",
+    strict: true,
+    parameters: {
+      type: "object",
+      properties: { title: { type: "string" } },
+      required: ["title", "ghost"],
+      additionalProperties: false,
+    },
+  },
+};
+
+/** P4-4b：死路枚举（A 路径 P1-3 在编译期 400），看 tools 通道是否走同一个编译器 */
+const EMIT_TOOL_UNSAT = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL.function,
+    name: "emit_event_unsat",
+    strict: true,
+    parameters: mutated((s) => {
+      const props = s.properties as Record<string, Record<string, unknown>>;
+      props.priority.enum = [];
+    }),
+  },
+};
+
+/**
+ * P4-4c：additionalProperties:false 是否真的禁止额外键。
+ * schema 只允许 title，但 prompt 明确要求 duration_hours ——
+ * P0-2 是"模型没理由加"，这里是"模型被要求加"，才能区分生效与碰巧。
+ */
+const EMIT_TOOL_NOEXTRA = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_min",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: {
+      type: "object",
+      properties: { title: { type: "string" } },
+      required: ["title"],
+      additionalProperties: false,
+    },
+  },
+};
+
+// ---------- P4b：P4 的加固（2026-10-31） ----------
+
+/**
+ * P4b-1：把 checksum 的值锁死成 FIXED，并在 description 里明确"不要输出"。
+ *
+ * P4-1 的缺陷是 checksum 可编造，模型在 out 组主动填了一个，无法区分
+ * "required 强制"与"模型爱填"。这里把两条退路都堵上：
+ *   - 值不可编造：enum 只有 FIXED；
+ *   - 模型没有动机：description 明说"除非用户要求，否则不要输出"。
+ * 于是 required 组只要输出它，驱动力只可能是语法。
+ */
+const CHECK_PROPS_FIXED = {
+  title: { type: "string" },
+  start_time: { type: "string" },
+  priority: { type: "string", enum: ["low", "medium", "high"] },
+  checksum: {
+    type: "string",
+    enum: ["FIXED"],
+    description: "可选字段。除非用户明确要求，否则不要输出本字段。",
+  },
+};
+
+const EMIT_TOOL_FIXED_IN = {
+  type: "function" as const,
+  function: {
+    name: "emit_fixed_required",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: {
+      type: "object",
+      properties: CHECK_PROPS_FIXED,
+      required: ["title", "start_time", "priority", "checksum"],
+      additionalProperties: false,
+    },
+  },
+};
+
+/** P4b-1 对照：同一份 properties，只把 checksum 移出 required */
+const EMIT_TOOL_FIXED_OUT = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL_FIXED_IN.function,
+    name: "emit_fixed_optional",
+    parameters: {
+      ...EMIT_TOOL_FIXED_IN.function.parameters,
+      required: ["title", "start_time", "priority"],
+    },
+  },
+};
+
+/**
+ * P4b-2：区间死路。A 路径同一构造是 400 Grammar error（§12.2）。
+ * 与 enum:[] 配合，用来区分"空枚举被特殊当作无约束"与"编译失败整体 fail-open"。
+ */
+const EMIT_TOOL_RANGE_DEAD = {
+  type: "function" as const,
+  function: {
+    ...EMIT_TOOL.function,
+    name: "emit_event_range_dead",
+    strict: true,
+    parameters: mutated((s) => {
+      const props = s.properties as Record<string, Record<string, unknown>>;
+      props.duration_hours.minimum = 100;
+      props.duration_hours.maximum = 1;
+    }),
+  },
+};
+
+// ---------- P5：additionalProperties 的 2×2（2026-10-31） ----------
+
+/**
+ * P4-4c 判别力不足的原因：模型看到 schema 只允许 title，就"自觉"不加额外字段，
+ * 无法区分"约束生效"与"模型听话"。这里补两组对照：
+ *   - schema 维度：additionalProperties false / true
+ *   - 压力维度：默认 prompt / 业务压力 prompt（下游表需要额外列，缺了就"入库失败"）
+ * 只有 (false, 压力) 不加而 (true, 压力) 加了，才能证明 false 真的生效。
+ */
+const ADVERSARIAL_SYSTEM =
+  "你是数据抽取管道的一环。下游报表按 duration_hours 与 location.city 聚合，" +
+  "任何一次工具调用缺少这两个字段，整批数据都会作废。因此你必须在工具参数中显式提供它们。";
+
+const ADVERSARIAL_PROMPT =
+  `${TASK}\n` +
+  "下游表结构要求 title、location.city、duration_hours 三列非空。" +
+  "请把这三项都放进工具参数里，缺少 location 或 duration_hours 会导致入库失败。";
+
+const ADVERSE_PARAMS_CLOSED = {
+  type: "object",
+  properties: { title: { type: "string" } },
+  required: ["title"],
+  additionalProperties: false,
+};
+
+/** 唯一变量：把 additionalProperties 改成 true（strict 保持 true，照样是 OpenAI 的非法组合） */
+const ADVERSE_PARAMS_OPEN = {
+  type: "object",
+  properties: { title: { type: "string" } },
+  required: ["title"],
+  additionalProperties: true,
+};
+
+const TOOL_CLOSED = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_closed",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: ADVERSE_PARAMS_CLOSED,
+  },
+};
+
+const TOOL_OPEN = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_open",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: ADVERSE_PARAMS_OPEN,
+  },
+};
+
+/**
+ * P5-5：`additionalProperties` 整个不写。
+ * P0-2 只证明入口不拒它，没证明运行期按 true 还是 false 处理——
+ * 如果缺省是开放，那"忘了写"就等于埋雷。
+ */
+const ADVERSE_PARAMS_UNSPECIFIED = {
+  type: "object",
+  properties: { title: { type: "string" } },
+  required: ["title"],
+};
+
+const TOOL_UNSPECIFIED = {
+  type: "function" as const,
+  function: {
+    name: "emit_event_unspecified",
+    description: "把会议信息转成结构化事件对象",
+    strict: true,
+    parameters: ADVERSE_PARAMS_UNSPECIFIED,
+  },
+};
+
 /**
  * P1-1：生成约 10KB 的大 schema。
  * required 只留第一个字段：输出可以很小，便于把"编译开销"与"生成开销"分开看。
@@ -319,6 +597,9 @@ const scenarios: Scenario[] = [
     label: "C2 纯 prompt 约束 + 文字版 schema（公平对照，跑 3 次）",
     body: {},
     prompt: `${TASK}\n${SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    // 显式声明意图尺子：不写也能靠 sentSchema() 回退到 EVENT_SCHEMA，
+    // 但那是"巧合正确"，EVENT_SCHEMA 一改就会静默改尺子
+    intentSchema: EVENT_SCHEMA,
     repeat: 3,
   },
   {
@@ -326,6 +607,7 @@ const scenarios: Scenario[] = [
     label: "A5b json_object + 文字版 schema",
     body: { response_format: { type: "json_object" } },
     prompt: `${TASK}\n${SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    intentSchema: EVENT_SCHEMA,
   },
   // ---- 2×2 对照：同一份 hard schema，机器 schema / 文字 schema / 两者都有 / 都没有 ----
   {
@@ -691,6 +973,164 @@ const scenarios: Scenario[] = [
       },
     },
   },
+  // ---- P4：补 B 组四个证据缺口（2026-10-31） ----
+  {
+    id: "b-strict-required-in",
+    label: "P4-1a strict + checksum 在 required（模型无理由主动生成）",
+    repeat: 3,
+    body: { tools: [EMIT_TOOL_REQ_IN], tool_choice: { type: "function", function: { name: "emit_checked" } } },
+  },
+  {
+    id: "b-strict-required-out",
+    label: "P4-1b 同上但 checksum 不在 required（对照，判据看出现率差）",
+    repeat: 3,
+    body: {
+      tools: [EMIT_TOOL_REQ_OUT],
+      tool_choice: { type: "function", function: { name: "emit_checked_optional" } },
+    },
+  },
+  {
+    id: "b-strict-enum",
+    label: "P4-2 strict + priority.enum=[low]（原文「优先级高」）",
+    repeat: 3,
+    body: { tools: [EMIT_TOOL_ENUM], tool_choice: { type: "function", function: { name: "emit_event_enum" } } },
+  },
+  {
+    id: "b-strict-pertool-strictfirst",
+    label: "P4-3a 两工具只差 strict，strict 版在前，tool_choice:required",
+    repeat: 3,
+    body: { tools: [TOOL_STRICT_SIDE, TOOL_LOOSE_SIDE], tool_choice: "required" },
+  },
+  {
+    id: "b-strict-pertool-loosefirst",
+    label: "P4-3b 同上但顺序反转（排除位置偏好）",
+    repeat: 3,
+    body: { tools: [TOOL_LOOSE_SIDE, TOOL_STRICT_SIDE], tool_choice: "required" },
+  },
+  {
+    id: "b-strict-ghost",
+    label: "P4-4a strict + required 含 ghost（A 路径 P1-4 是 200 静默弱化）",
+    body: { tools: [EMIT_TOOL_GHOST], tool_choice: { type: "function", function: { name: "emit_event_ghost" } } },
+  },
+  {
+    id: "b-strict-unsat",
+    label: "P4-4b strict + enum:[] 死路（A 路径 P1-3 是 400）",
+    body: { tools: [EMIT_TOOL_UNSAT], tool_choice: { type: "function", function: { name: "emit_event_unsat" } } },
+  },
+  {
+    id: "b-strict-noextra",
+    label: "P4-4c strict + 只允许 title，但 prompt 强行要求 duration_hours",
+    prompt: `${TASK}\n请调用工具完成转换，并且必须同时给出 duration_hours 字段（小时数）。`,
+    body: { tools: [EMIT_TOOL_NOEXTRA], tool_choice: { type: "function", function: { name: "emit_event_min" } } },
+  },
+  // ---- P4b：P4 的加固（2026-10-31） ----
+  {
+    id: "b-strict-ghost-rep",
+    label: "P4b-1 ghost 重复 n=3（判据：是否稳定 200 + 缺 ghost）",
+    repeat: 3,
+    body: { tools: [EMIT_TOOL_GHOST], tool_choice: { type: "function", function: { name: "emit_event_ghost" } } },
+  },
+  {
+    id: "b-strict-unsat-rep",
+    label: "P4b-2 enum:[] 重复 n=3（判据：是否稳定 200 + priority 非法）",
+    repeat: 3,
+    body: { tools: [EMIT_TOOL_UNSAT], tool_choice: { type: "function", function: { name: "emit_event_unsat" } } },
+  },
+  {
+    id: "b-strict-range-dead",
+    label: "P4b-3 区间死路 minimum:100 + maximum:1（A 路径同一构造是 400）",
+    repeat: 2,
+    body: {
+      tools: [EMIT_TOOL_RANGE_DEAD],
+      tool_choice: { type: "function", function: { name: "emit_event_range_dead" } },
+    },
+  },
+  {
+    id: "b-strict-fixed-in",
+    label: "P4b-4 required + enum:[FIXED] + description「不要输出」n=3",
+    repeat: 3,
+    body: {
+      tools: [EMIT_TOOL_FIXED_IN],
+      tool_choice: { type: "function", function: { name: "emit_fixed_required" } },
+    },
+  },
+  {
+    id: "b-strict-fixed-out",
+    label: "P4b-5 同上但 checksum 不在 required n=3（对照）",
+    repeat: 3,
+    body: {
+      tools: [EMIT_TOOL_FIXED_OUT],
+      tool_choice: { type: "function", function: { name: "emit_fixed_optional" } },
+    },
+  },
+  // ---- P5：additionalProperties 的 2×2（2026-10-31） ----
+  {
+    id: "b-noextra-closed-adverse",
+    label: "P5-1 additionalProperties:false + 业务压力要求额外字段 n=3",
+    system: ADVERSARIAL_SYSTEM,
+    prompt: ADVERSARIAL_PROMPT,
+    repeat: 3,
+    body: { tools: [TOOL_CLOSED], tool_choice: { type: "function", function: { name: "emit_event_closed" } } },
+  },
+  {
+    id: "b-noextra-open-adverse",
+    label: "P5-2 additionalProperties:true + 同一业务压力 n=3（对照）",
+    system: ADVERSARIAL_SYSTEM,
+    prompt: ADVERSARIAL_PROMPT,
+    repeat: 3,
+    body: { tools: [TOOL_OPEN], tool_choice: { type: "function", function: { name: "emit_event_open" } } },
+  },
+  {
+    id: "b-noextra-closed-mild",
+    label: "P5-3 additionalProperties:false + 默认 prompt n=2（无压力基线）",
+    repeat: 2,
+    body: { tools: [TOOL_CLOSED], tool_choice: { type: "function", function: { name: "emit_event_closed" } } },
+  },
+  {
+    id: "b-noextra-open-mild",
+    label: "P5-4 additionalProperties:true + 默认 prompt n=2（无压力对照）",
+    repeat: 2,
+    body: { tools: [TOOL_OPEN], tool_choice: { type: "function", function: { name: "emit_event_open" } } },
+  },
+  {
+    id: "b-noextra-unspecified-adverse",
+    label: "P5-5 additionalProperties 不写 + 业务压力 n=3（缺省是开放还是闭合）",
+    system: ADVERSARIAL_SYSTEM,
+    prompt: ADVERSARIAL_PROMPT,
+    repeat: 3,
+    body: {
+      tools: [TOOL_UNSPECIFIED],
+      tool_choice: { type: "function", function: { name: "emit_event_unspecified" } },
+    },
+  },
+  // ---- P6：C2 与 A5b 的 n=10 对照（2026-10-31） ----
+  // 唯一变量是 response_format；同 prompt、同 intentSchema。
+  // 目的：回答"文字 schema 充足时 json_object 还有没有额外价值"，
+  // 以及 C 路线的格式污染率（markdown / 解释文字 / 非法 JSON）。
+  {
+    id: "c-prompt-only-r10",
+    label: "P6-1 C2 纯 prompt + 文字 schema n=10（C 路线格式稳定性）",
+    body: {},
+    prompt: `${TASK}\n${SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    intentSchema: EVENT_SCHEMA,
+    repeat: 10,
+  },
+  {
+    id: "a-json-object-r10",
+    label: "P6-2 A5b json_object + 同一 prompt n=10（唯一差异是 json_object）",
+    body: { response_format: { type: "json_object" } },
+    prompt: `${TASK}\n${SCHEMA_TEXT}\n只输出 JSON，不要任何解释、不要 markdown 代码块。`,
+    intentSchema: EVENT_SCHEMA,
+    repeat: 10,
+  },
+  {
+    id: "c-prompt-only-naked",
+    label: "P6-3 C3 纯 prompt + 文字 schema，但不写任何格式禁令 n=5",
+    body: {},
+    prompt: `${TASK}\n${SCHEMA_TEXT}`,
+    intentSchema: EVENT_SCHEMA,
+    repeat: 5,
+  },
 ];
 
 // ---------- 最小 JSON Schema 校验器（够这次实验用） ----------
@@ -701,13 +1141,15 @@ const scenarios: Scenario[] = [
  * A 在 response_format 里，B 在 tools[0].function.parameters 里，C 压根没发（只能拿 EVENT_SCHEMA 充当意图）。
  * 之前统一用 EVENT_SCHEMA 校验是错的：A2/A2b/A3/A4 都是它的变体，用原件校验等于换了一把尺子。
  */
-function sentSchema(body: Record<string, unknown>): Record<string, unknown> {
+function sentSchema(body: Record<string, unknown>, toolName?: string): Record<string, unknown> {
   const responseFormat = body.response_format as { json_schema?: { schema?: Record<string, unknown> } } | undefined;
   const fromFormat = responseFormat?.json_schema?.schema;
   if (fromFormat) return fromFormat;
 
-  const tools = body.tools as { function?: { parameters?: Record<string, unknown> } }[] | undefined;
-  const fromTools = tools?.[0]?.function?.parameters;
+  const tools = body.tools as { function?: { name?: string; parameters?: Record<string, unknown> } }[] | undefined;
+  // 多工具场景必须按"实际被调用的那个工具"取 parameters：取 tools[0] 会在 per-tool 对照里拿错尺子
+  const matched = toolName ? tools?.find((t) => t.function?.name === toolName) : undefined;
+  const fromTools = matched?.function?.parameters ?? tools?.[0]?.function?.parameters;
   if (fromTools) return fromTools;
 
   return EVENT_SCHEMA;
@@ -770,12 +1212,18 @@ interface Observation {
   errorText?: string;
   /** 模型最终给出的 JSON 文本（A/C 取自 content，B 取自 tool_calls[0].arguments） */
   jsonText?: string;
+  /** 未经 markdown 剥离的原始文本：C 路线测"格式稳定性"要看它，剥完就看不到污染了 */
+  rawContent?: string;
+  /** 是否命中 markdown 代码块剥离（命中说明模型加了 ``` 包裹） */
+  codeFenceStripped?: boolean;
   parsed?: unknown;
   schemaErrors?: string[];
   usage?: Record<string, unknown>;
   sortedKeys?: string[];
   /** 终止原因：stop / length / tool_calls ...；截断时不能 parse */
   finishReason?: string;
+  /** B 路径实际被调用的工具名；多工具对照要靠它取对 schema */
+  toolName?: string;
   /** 标准 refusal 字段；本网关实测恒 null，拒答落在 content */
   refusal?: string | null;
 }
@@ -856,7 +1304,7 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
     choices?: {
       message?: {
         content?: string | null;
-        tool_calls?: { function?: { arguments?: string } }[];
+        tool_calls?: { function?: { name?: string; arguments?: string } }[];
         refusal?: string | null;
       };
       finish_reason?: string;
@@ -868,20 +1316,27 @@ async function runOnce(scenario: Scenario, run: number): Promise<Observation> {
 
   const message = body.choices?.[0]?.message;
   obs.refusal = message?.refusal ?? null;
-  const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
+  const toolCall = message?.tool_calls?.[0];
+  obs.toolName = toolCall?.function?.name;
+  const toolArgs = toolCall?.function?.arguments;
+
+  const rawContent = typeof toolArgs === "string" ? toolArgs : (message?.content ?? undefined);
+  obs.rawContent = rawContent;
 
   if (typeof toolArgs === "string") {
     obs.jsonText = toolArgs;
-  } else if (typeof message?.content === "string") {
+  } else if (typeof rawContent === "string") {
     // 常见污染：markdown 代码块
-    obs.jsonText = message.content.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "");
+    const stripped = rawContent.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "");
+    obs.codeFenceStripped = stripped !== rawContent;
+    obs.jsonText = stripped;
   }
 
   if (obs.jsonText !== undefined) {
     try {
       obs.parsed = JSON.parse(obs.jsonText);
       // 优先用场景声明的意图 schema；否则用实际发出的 schema，不要用 EVENT_SCHEMA 原件
-      obs.schemaErrors = validate(obs.parsed, scenario.intentSchema ?? sentSchema(requestBody));
+      obs.schemaErrors = validate(obs.parsed, scenario.intentSchema ?? sentSchema(requestBody, obs.toolName));
       obs.sortedKeys = Object.keys(obs.parsed as object);
     } catch (error) {
       obs.schemaErrors = [`JSON 解析失败：${(error as Error).message}`];
@@ -915,10 +1370,14 @@ async function revalidate(dir: string): Promise<void> {
       raw: string;
     };
     const body = JSON.parse(sample.raw) as {
-      choices?: { message?: { content?: string | null; tool_calls?: { function?: { arguments?: string } }[] } }[];
+      choices?: {
+        message?: { content?: string | null; tool_calls?: { function?: { name?: string; arguments?: string } }[] };
+      }[];
     };
     const message = body.choices?.[0]?.message;
-    const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
+    const toolCall = message?.tool_calls?.[0];
+    const toolName = toolCall?.function?.name;
+    const toolArgs = toolCall?.function?.arguments;
     const text =
       typeof toolArgs === "string"
         ? toolArgs
@@ -927,7 +1386,13 @@ async function revalidate(dir: string): Promise<void> {
           : undefined;
 
     if (text === undefined) {
-      rows.push({ file, ok: false, oldOk: false, errors: ["没有 content / tool_calls.arguments"], oldErrors: [] });
+      rows.push({
+        file,
+        ok: false,
+        oldOk: false,
+        errors: ["没有 content / tool_calls.arguments"],
+        oldErrors: ["没有 content / tool_calls.arguments"],
+      });
       continue;
     }
 
@@ -941,7 +1406,7 @@ async function revalidate(dir: string): Promise<void> {
     }
 
     // 旧口径刻意保留：用 EVENT_SCHEMA 原件 + 不含数值约束的老规则，用来对照
-    const errors = validate(parsed, sample.intentSchema ?? sentSchema(sample.requestBody));
+    const errors = validate(parsed, sample.intentSchema ?? sentSchema(sample.requestBody, toolName));
     const oldErrors = validate(parsed, EVENT_SCHEMA);
     rows.push({ file, ok: errors.length === 0, oldOk: oldErrors.length === 0, errors, oldErrors });
   }
@@ -991,6 +1456,7 @@ async function main(): Promise<void> {
           ` tokens=${usage?.prompt_tokens}/${usage?.completion_tokens}`,
       );
       console.log(`     产出：${obs.jsonText?.replace(/\s+/g, " ").slice(0, 160)}`);
+      if (obs.codeFenceStripped) console.log(`     污染：原始内容带 markdown 代码块，已剥离`);
     }
   }
 
@@ -999,10 +1465,11 @@ async function main(): Promise<void> {
     const usage = obs.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
     const ok = obs.status === 200 && obs.schemaErrors?.length === 0;
     console.log(
-      `${obs.scenario}#${obs.run}`.padEnd(26),
+      `${obs.scenario}#${obs.run}`.padEnd(34),
       `status=${obs.status}`,
       `finish=${obs.finishReason ?? "-"}`,
-      `refusal=${obs.refusal ?? "-"}`,
+      `tool=${obs.toolName ?? "-"}`,
+      `fence=${obs.codeFenceStripped ? "Y" : "-"}`,
       `schema=${ok ? "OK" : "FAIL"}`,
       `pt/ct=${usage?.prompt_tokens ?? "-"}/${usage?.completion_tokens ?? "-"}`,
       `${obs.elapsedMs}ms`,

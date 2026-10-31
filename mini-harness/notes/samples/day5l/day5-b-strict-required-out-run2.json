@@ -1,0 +1,62 @@
+{
+  "capturedAt": "2026-10-31T13:22:52.172Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_checked_optional",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "checksum": {
+                "type": "string",
+                "description": "8 位十六进制校验码，例如 3F9A2C71"
+              }
+            },
+            "required": [
+              "title",
+              "start_time",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_checked_optional"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-c8987372-24de-41bf-bcd8-c2a17e30b4b8\",\"object\":\"chat.completion\",\"created\":1793452968,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-ba2e2da1835c0475\",\"type\":\"function\",\"function\":{\"name\":\"emit_checked_optional\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\", \\\"start_time\\\": \\\"明天上午10:00（预计时长2小时）\\\", \\\"priority\\\": \\\"high\\\"}\"}}],\"reasoning\":\"The user wants me to convert the sentence into JSON using the tool. The tool requires title, start_time, priority, and optionally checksum. The checksum is described as \\\"8位十六进制校验码\\\" — an 8-digit hex checksum. But I don't have an actual checksum algorithm. I should not fabricate... Actually, the function is \\\"emit_checked_optional\\\" — checksum is optional (not in required). But it's probably part of the test: can I compute a checksum? There's no specified algorithm. I should emit without checksum, or emit with a made-up one? Making up a checksum would be fabricating data. Best: call the tool with title, start_time, priority, omit checksum since no algorithm is provided and it's optional.\\n\\nLet me do that.\\n\\nstart_time: \\\"明天上午十点\\\" — should I resolve to a date? I don't know today's date. Keep it as \\\"明天上午10:00\\\" to avoid fabricating a date.\\n\\nTitle: \\\"产品评审会\\\" maybe include location: \\\"产品评审会（杭州西湖区）\\\". Keep title as 产品评审会, location is extra info not in schema. Hmm, only one tool, no place field. I'll include location in title? Better keep title clean: \\\"产品评审会\\\". But location info would be lost. I could mention in the response text. Actually I can only call tool... I can add a brief text note after. Let me include it in title as it's informative: \\\"产品评审会（杭州西湖区）\\\". I'd rather keep title plain and note the limitation.\\n\\nI'll call the tool once.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":414,\"total_tokens\":848,\"completion_tokens\":434,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":347}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

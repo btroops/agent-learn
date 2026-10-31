@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-10-31T13:27:31.020Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_ghost",
+          "description": "探测 required 指向不存在字段时的编译行为",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "ghost"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_ghost"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-20defdfe-59a9-4e04-aff3-b33e3bcf6648\",\"object\":\"chat.completion\",\"created\":1793453247,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-801636e76881cb17\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_ghost\",\"arguments\":\"{\\\"title\\\": \\\"{\\\\\\\"title\\\\\\\":\\\\\\\"产品评审会\\\\\\\",\\\\\\\"time\\\\\\\":\\\\\\\"2024-明天上午10:00\\\\\\\",\\\\\\\"location\\\\\\\":\\\\\\\"杭州西湖区\\\\\\\",\\\\\\\"duration\\\\\\\":\\\\\\\"2小时\\\\\\\",\\\\\\\"owner\\\\\\\":\\\\\\\"张三\\\\\\\",\\\\\\\"priority\\\\\\\":\\\\\\\"高\\\\\\\"}\\\"}\"}}],\"reasoning\":\"The user wants to convert a sentence to JSON, and asks to call the tool to complete the conversion. The tool available is emit_event_ghost, which requires \\\"title\\\" and a \\\"ghost\\\" property that doesn't exist... This is a probe tool for testing compilation behavior when required points to non-existent field. The schema says required: [\\\"title\\\", \\\"ghost\\\"] but additionalProperties: false and no \\\"ghost\\\" property defined.\\n\\nI need to call it with title. But \\\"ghost\\\" is required and not allowed. Hmm. I should attempt to call with title only? The required includes ghost but it's not defined in properties, so passing ghost would violate additionalProperties: false.\\n\\nBest approach: call the tool with title containing the JSON. Let's provide title as the JSON string. Maybe also include ghost? That would be additional property error. I'll just pass title and see. Actually the instruction says don't answer directly, call the tool. Let's call with title as JSON.\\n\\nBut the task is \\\"转成 JSON\\\" - convert sentence to JSON. The tool only takes title. I'll put the JSON in title.\\n\\nLet me construct the JSON: {\\\"title\\\":\\\"产品评审会\\\",\\\"time\\\":\\\"明天上午十点\\\",\\\"location\\\":\\\"杭州西湖区\\\",\\\"duration\\\":\\\"2小时\\\",\\\"owner\\\":\\\"张三\\\",\\\"priority\\\":\\\"高\\\"}\\n\\nCall the tool with title = that JSON? Or title as event title. I'll pass the JSON as title string.\\n\\nI'll call it.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":348,\"total_tokens\":730,\"completion_tokens\":382,\"prompt_tokens_details\":{\"cached_tokens\":256,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":304}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

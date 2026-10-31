@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-10-31T13:30:02.425Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_closed",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_closed"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-1778d696-5e24-47e8-9702-e3560287f93f\",\"object\":\"chat.completion\",\"created\":1793453400,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-bc77cb9e89a073b5\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_closed\",\"arguments\":\"{\\\"title\\\": \\\"明天上午十点在杭州西湖区开产品评审会，预计2小时，负责人张三，优先级高\\\"}\"}}],\"reasoning\":\"The user wants me to convert a sentence into a structured event object. I have a tool `emit_event_closed` that only takes a title parameter. Let me call it.\\n\\nThe title could be \\\"产品评审会\\\" or the full info. Let me think about what makes sense. The tool schema only accepts title. Let me pass an appropriate title.\\n\\nActually the tool only accepts a title string. Maybe I should put the whole thing? The best is to summarize the meeting title. But the tool schema is limited. Let me call with title being the meeting name and possibly details. Since only title is allowed, I'll put \\\"产品评审会\\\".\\n\\nHmm, but that loses info. The schema is strict with only title. I'll provide the title as the meeting title. Given constraints, I'll do that.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":342,\"total_tokens\":569,\"completion_tokens\":227,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":166}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

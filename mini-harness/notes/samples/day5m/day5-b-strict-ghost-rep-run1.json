@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-10-31T13:27:27.245Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_ghost",
+          "description": "探测 required 指向不存在字段时的编译行为",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "ghost"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_ghost"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-98144b97-f18f-44f9-b76f-b111fe663859\",\"object\":\"chat.completion\",\"created\":1793453245,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-80098612e0170540\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_ghost\",\"arguments\":\"{\\\"title\\\": \\\"明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高\\\"}\"}}],\"reasoning\":\"The tool is emit_event_ghost with required title, ghost. The user wants to convert the sentence to JSON. The tool schema requires \\\"ghost\\\" which isn't in the data. Let me call it and see what happens — it's a probe for compile behavior.\\n\\nI should call the tool. Include title and ghost (missing field). Let's see the result.\\n\\nPer instructions, I must call the tool. The \\\"ghost\\\" param is required but the data doesn't contain it. I'll call with title from the sentence and ghost as something? The description says \\\"探测 required 指向不存在字段时的编译行为\\\" — probe compile behavior when required points to a nonexistent field. So presumably I call without ghost? But schema requires it. Let me just call with title only and see errors.\\n\\nActually I'll try calling with title only to probe.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":348,\"total_tokens\":587,\"completion_tokens\":239,\"prompt_tokens_details\":{\"cached_tokens\":256,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":175}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

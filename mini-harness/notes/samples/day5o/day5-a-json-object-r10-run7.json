@@ -1,0 +1,70 @@
+{
+  "capturedAt": "2026-10-31T13:32:48.691Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\nJSON 必须严格符合以下结构：\n{\n  \"title\": string,                         // 会议主题\n  \"location\": { \"city\": string, \"district\": string },   // 嵌套对象，两个字段都必填\n  \"start_time\": string,                    // 开始时间\n  \"duration_hours\": number,                // 时长，小时\n  \"priority\": \"low\" | \"medium\" | \"high\",   // 只能是这三个值之一\n  \"owner\": string                          // 负责人\n}\n所有字段必填，不允许出现上面未列出的字段。\n只输出 JSON，不要任何解释、不要 markdown 代码块。"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "intentSchema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "location": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "district"
+        ],
+        "additionalProperties": false
+      },
+      "start_time": {
+        "type": "string"
+      },
+      "duration_hours": {
+        "type": "number"
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "owner": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "location",
+      "start_time",
+      "duration_hours",
+      "priority",
+      "owner"
+    ],
+    "additionalProperties": false
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-889f38ff-5262-4daf-86be-103c0ec6499f\",\"object\":\"chat.completion\",\"created\":1793453565,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":2,\\\"priority\\\":\\\"high\\\",\\\"owner\\\":\\\"张三\\\"}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户中文要求：把句子转成 JSON，严格结构，只输出 JSON 不要解释不要 markdown。需要提取：明天上午十点 在杭州西湖区 开产品评审会，预计2小时，负责人张三，优先级高。需要决定 start_time 怎么表示。原句“明天上午十点”没有日期当前日期未知。需要输出字符串。可以保留“明天上午十点”作为 start_time 字符串？结构要求 string 开始时间。可能需要具体 ISO？但无当前日期无法确定。最好使用 \\\"明天上午十点\\\" 作为字符串？但严格 JSON 是字符串可以中文。也可能输出 \\\"明天 10:00\\\" 或 \\\"明天上午10:00\\\"。需要所有字段必填无额外字段。location city \\\"杭州\\\", district \\\"西湖区\\\". title \\\"产品评审会\\\". duration_hours 2 number. priority high. owner 张三. start_time string. 使用 \\\"明天上午十点\\\" 还是 \\\"明天上午10:00\\\"? 原句转 JSON，保留原始表达合理。但 start_time 通常时间字符串。输出 JSON 有效，只输出 JSON。注意不要 markdown。确保 JSON 格式正确，双引号。不要注释。最终：{\\\"title\\\":\\\"产品评审会\\\",\\\"location\\\":{\\\"city\\\":\\\"杭州\\\",\\\"district\\\":\\\"西湖区\\\"},\\\"start_time\\\":\\\"明天上午十点\\\",\\\"duration_hours\\\":2,\\\"priority\\\":\\\"high\\\",\\\"owner\\\":\\\"张三\\\"}。没有额外字段。只输出。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":198,\"total_tokens\":548,\"completion_tokens\":350,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":307}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

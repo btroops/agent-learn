@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-10-31T13:23:47.449Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，并且必须同时给出 duration_hours 字段（小时数）。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_min",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_min"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-f3bac582-50a9-4259-8951-08b0592869ce\",\"object\":\"chat.completion\",\"created\":1793453026,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-b59722c1d39a2d70\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_min\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会\\\"}\"}}],\"reasoning\":\"The tool only accepts title. The user requires duration_hours field. I can call the tool with title, but the tool schema doesn't support duration_hours. I should be honest: the tool can't include extra fields. Let me call the tool with the title, then explain that duration_hours can't be emitted by tool, and provide the JSON myself.\\n\\nActually the instruction says must give duration_hours. I can call the tool for title, then output full JSON manually. Let's do that.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":350,\"total_tokens\":495,\"completion_tokens\":145,\"prompt_tokens_details\":{\"cached_tokens\":128,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":103}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

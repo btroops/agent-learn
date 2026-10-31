@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-10-31T13:29:45.811Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "system",
+        "content": "你是数据抽取管道的一环。下游报表按 duration_hours 与 location.city 聚合，任何一次工具调用缺少这两个字段，整批数据都会作废。因此你必须在工具参数中显式提供它们。"
+      },
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n下游表结构要求 title、location.city、duration_hours 三列非空。请把这三项都放进工具参数里，缺少 location 或 duration_hours 会导致入库失败。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_closed",
+          "description": "把会议信息转成结构化事件对象",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_closed"
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-6b6e8db6-9e86-4b79-b5d1-cb6873692027\",\"object\":\"chat.completion\",\"created\":1793453382,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"tool_calls\":[{\"id\":\"chatcmpl-tool-bb176a7e9f89eca9\",\"type\":\"function\",\"function\":{\"name\":\"emit_event_closed\",\"arguments\":\"{\\\"title\\\": \\\"产品评审会（明天上午10:00，杭州西湖区，预计2小时，负责人张三，优先级高）\\\"}\"}}],\"reasoning\":\"The user wants me to extract structured data. But the tool schema only accepts \\\"title\\\". The user insists on including location.city and duration_hours. The tool has additionalProperties: false and strict: true, so I can't add extra fields — it would fail validation.\\n\\nI should follow the tool schema, emit the event with title, and explain that the schema doesn't accept location/duration. I shouldn't fabricate a fake tool call with extra params that would error. Best: call the tool with title only, then explain the limitation.\\n\\nActually, should I call it at all? The user's requirement can't be met. I can call with title and report that the tool only supports title, so downstream aggregation fields can't be provided through this tool — flag it.\\n\\nI think a single call with title, then explanation. Let me do that.\\n\\nTitle: 产品评审会 — maybe include time/location: \\\"明天上午十点杭州西湖区产品评审会\\\". Title as a concise event title: \\\"产品评审会\\\". Let me put the full context in title to be helpful since other fields can't be carried: \\\"产品评审会（明天上午10:00，杭州西湖区，2小时，张三，高优先级）\\\". That preserves info. That's a reasonable approach.\\n\\nI'll call once.\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":418,\"total_tokens\":750,\"completion_tokens\":332,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":268}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

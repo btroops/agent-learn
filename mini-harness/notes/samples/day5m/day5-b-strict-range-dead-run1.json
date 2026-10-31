@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-10-31T13:27:47.565Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。\n请调用工具完成转换，不要直接回答。"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "emit_event_range_dead",
+          "description": "把会议信息转成结构化事件对象",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city",
+                  "district"
+                ],
+                "additionalProperties": false
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "duration_hours": {
+                "type": "number",
+                "minimum": 100,
+                "maximum": 1
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "location",
+              "start_time",
+              "duration_hours",
+              "priority",
+              "owner"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "function",
+      "function": {
+        "name": "emit_event_range_dead"
+      }
+    }
+  },
+  "http": {
+    "status": 400
+  },
+  "raw": "{\"error\":{\"message\":\"Invalid grammar specification: 'triggers'\",\"type\":\"BadRequestError\",\"param\":null,\"code\":400}}"
+}
