@@ -471,7 +471,7 @@ Py : #0 get_weather({"city": "北京", "unit": "celsius"}) -> {"city": "北京",
 
 因此第 4 节"强制力"一行，B 列由"同左"改为"**不强制**"。B 的 `required` / `enum` 是否生效**未测**，不能推广。
 
-> **2026-10-31 复核（结论待拆）**：`EMIT_TOOL` 没有 `function.strict: true`，而 A 路径是 `strict: true`。所以这组对比实际是"strict 开 vs strict 没开"，"通道相关"可能只是"strict 开关相关"。拆解实验见 §10.2。
+> **2026-10-31 复核（已拆开）**：`EMIT_TOOL` 没有 `function.strict: true`，而 A 路径是 `strict: true`。所以这组对比实际是"strict 开 vs strict 没开"；§11 的 P0 结果证实：**strict 才是开关，原"通道"结论作废**。
 
 **一处需要打问号的观测**：S2 同时出现了与约束无关的漂移——`owner` 从"张三"变成"李四"，`start_time` 变成编造的绝对日期（reasoning 里还臆造了"系统日期 2026-05-07"）。单次观测无法判断这是采样噪声还是约束冲突的副作用，**未计入结论**；要归因得重复跑。
 
@@ -526,12 +526,12 @@ A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶
 
 **容易过度的推断**："A3 返回 200 就说明编译器把 `additionalProperties: true` 编译成了允许额外键"——不成立。模型本就没有理由添加额外键，所以输出"没有多余字段"无法区分"允许但没加"与"不支持 true、按 false 处理"。
 
-**B 路径的混淆变量（比 A3 更要紧）**：`EMIT_TOOL` 没有 `function.strict: true`，A 路径却是 `strict: true`。§9 的对比实际是"strict 开 vs 没开"，不是"两个通道"；S4 只能支持"**没开 strict 的** tools 不强制"。补两个场景即可拆开：
+**B 路径的混淆变量（比 A3 更要紧）**：`EMIT_TOOL` 没有 `function.strict: true`，A 路径却是 `strict: true`。§9 的对比实际是"strict 开 vs 没开"，不是"两个通道"；S4 只能支持"**没开 strict 的** tools 不强制"。两个拆解场景已跑（细节见 §11）：
 
-| 待补场景 | 请求 | 判定 |
+| 场景 | 请求 | 结果 |
 |---|---|---|
-| B + strict | `tools:[EMIT_TOOL]`，`function.strict:true`，`minimum:100`，原文"2 小时" | 输出 `2` → 通道结论成立；输出 ≥100 → 结论改为"strict 开关相关" |
-| tools 入口校验 | 同上但 `parameters` 故意缺 `additionalProperties` | 400 → 网关对 tools 也做 strict 校验；200 → 不做 |
+| B + strict | `tools` + `function.strict:true` + `minimum:100`，原文"2 小时" | 输出 `200`（≥100）→ **strict 开关生效**，原"通道"结论作废 |
+| tools 入口校验 | 同上但 `parameters` 故意缺 `additionalProperties` | 200 → 网关对 tools 也**不做** strict 元规则校验 |
 
 #### 10.3 更正：OpenAI 也不把 schema 计入 prompt_tokens
 
@@ -545,3 +545,24 @@ A3/A4 都返回 200，只能证明**第一阶段在本网关缺位**；第二阶
 #### 10.4 对 W3 的影响（不变，但理由更硬）
 
 工具参数的运行时校验仍然必须做：即使网关将来支持 strict，strict 也只保证结构与类型，不保证值正确（A2b 的 `205` 已经证明语法层会为满足约束而扭曲语义）。另外 strict 的保证还有两个缺口——`refusal` 与 `finish_reason: "length"`，harness 解析前必须先检查。
+
+### 11. P0 结果：strict 是开关，不是通道（2026-10-31，2 次请求）
+
+实现：`structured.ts` 的 `b-strict-minimum` / `b-strict-invalid`；样本 `samples/day5c/`。判据在跑之前由 §10.2 定好。
+
+| 场景 | 请求差异 | HTTP | 输出 | prompt/completion | 关键观察 |
+|---|---|---|---|---|---|
+| P0-1 `b-strict-minimum` | `tools` + `function.strict:true` + `minimum:100`，原文 2 小时 | 200 | `duration_hours: 200` | 462 / 560 | reasoning 明确计划传 `2` 并预期被拒，实际 arguments 是 `200` |
+| P0-2 `b-strict-invalid` | `strict:true`，但 `parameters` 缺 `additionalProperties` | 200 | 只有 `title` | 340 / 198 | 入口没拒；reasoning 里明确说 "strict: true but no additionalProperties" |
+
+**结论一：§9 的"通道相关"作废，改为"strict 开关相关"。** 同一份 `minimum:100`、同一句原文：不开 strict 的 S4 输出 `2`，开 strict 的 P0-1 输出 `200`。更关键的是 P0-1 的 reasoning 与实际输出不一致——模型自己写的是"先按 2 调用试试"，最后 arguments 却是 `200`。这不是模型改主意，而是采样阶段被约束（服务端至少对 `minimum` 做了强制）。
+
+**结论二：入口 strict 校验在 tools 通道上同样缺位。** P0-2 的坏 schema 返回 200，与 A3/A4 在 `response_format` 通道上的表现一致：网关只把 schema 交给编译器，不按 OpenAI 元规则在入口拒绝。
+
+**证据限制**（不要把这两条推得太远）：
+
+- P0-1 是单次样本；`strict` 会进 prompt（S4 457 → P0-1 462，+5 token），模型能看见它。"reasoning 想传 2、实际 200"能区分"模型自觉遵守"与"被约束"，但仍建议重复 3 次加固。
+- P0-2 只能证明入口不拒。输出只有 `title` 也可能来自模型遵守可见 schema，无法区分"编译器接受了坏 schema"与"回退/忽略约束"。
+- 仍未测：B + strict 下 `required` / `enum` 是否同样生效；以及 `strict` 是否只对 `tool_choice` 强制的那个工具生效。
+
+对选型的影响：`tools` 并不天然"只是说明书"——**开 `strict:true` 后它同样会被服务端约束**。但入口不校验元规则，坏 schema 仍会被放行；且参数正确性仍要客户端校验，因为 strict 只保证结构、不保证语义（P0-1 的 2 小时 → 200 小时就是新证据）。

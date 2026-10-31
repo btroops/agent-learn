@@ -234,7 +234,7 @@ type ChatCompletionTool = ChatCompletionFunctionTool | ChatCompletionCustomTool;
 - **数值/字符串约束的封禁范围随版本变化**：2024 首发时 `minimum`/`maximum`/`multipleOf`/`minLength`/`maxLength` 均不支持；2026 年外部资料称标准模型已支持数值约束，**微调模型仍不支持**。官方页本次访问 403、未直读，标【待官方复核】。
 - **错误形态**：入口校验失败是 400，消息带上下文路径，如 `Invalid schema for response_format 'event': In context=(), 'additionalProperties' is required to be supplied and to be false.`；tools 通道是 `Invalid schema for function 'emit_event': ...`。
 - **两个例外会让"保证"失效**：`refusal` 非空、`finish_reason: "length"`。解析前先看这两个。
-- `strict` 也出现在 `response_format.json_schema.strict`，不只 tools。本项目 Day 5 的 B 路径**没写** `strict`，所以"tools 不强制"的结论带混淆变量（见 devlog Day 5 §10.2）。
+- `strict` 也出现在 `response_format.json_schema.strict`，不只 tools。本项目 P0 实测：tools 开 `strict:true` 后 `minimum` 同样被强制（输出 200），不开则被无视（输出 2）——**强制力跟 strict 开关走，不跟通道走**（见 devlog §11）。但入口仍不校验元规则（P0-2 返回 200）。
 
 另外几个行为差异也要记住：
 
@@ -820,7 +820,7 @@ grep -n "export interface CompletionUsage" -A 30 package/resources/completions.d
 |---|---|---|---|
 | `stream_options.include_usage` | 流式请求加该字段，把原始 chunk 全打出来 | `[DONE]` 前出现 `choices: []` 且带 `usage` 的 chunk | Day 4 |
 | `obfuscation` | 同上，看每个 chunk 顶层有无 `obfuscation` | 有则该网关也开了防侧信道；没有则解析器可省一条"忽略未知字段"的兜底 | Day 4 |
-| `strict: true` | 带 `strict` 的工具 + 故意缺失 `additionalProperties` | 400 且错误信息点名缺哪条约束，才算"真支持" | **部分验（Day 5）**：只测了 `response_format` 通道，A3/A4 均 200 → 不校验；**tools + strict 仍未测**（B 路径没写 strict） |
+| `strict: true` | 带 `strict` 的工具 + 故意缺失 `additionalProperties` | 400 且错误信息点名缺哪条约束，才算"真支持" | **已验（Day 5 + P0）**：入口两侧都不校验元规则（A3/A4、P0-2 均 200）；tools 开 strict 后 `minimum` 生效（P0-1 输出 200） |
 | `response_format: json_schema` | 嵌套对象 + enum 的 schema | 返回体可直接 `JSON.parse` 且符合 schema | **已验（Day 5 A1）**：通过；schema 不进 `prompt_tokens` |
 | `custom` 工具 | `type:"custom"` + `format:{type:"text"}` | 响应 `tool_calls[].custom.input` 是纯文本，或明确 400 | Day 5（顺带） |
 | `tool_choice.allowed_tools` | 传两个工具、只允许一个 | 模型不会调用被排除的那个；若报 400 则记"不支持" | Day 5（顺带） |
