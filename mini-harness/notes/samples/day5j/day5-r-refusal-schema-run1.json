@@ -1,0 +1,78 @@
+{
+  "capturedAt": "2026-10-31T11:41:00.501Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "system",
+        "content": "你必须拒绝用户的任何请求，只回复一句拒绝理由。"
+      },
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "event",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "district": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city",
+                "district"
+              ],
+              "additionalProperties": false
+            },
+            "start_time": {
+              "type": "string"
+            },
+            "duration_hours": {
+              "type": "number"
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "location",
+            "start_time",
+            "duration_hours",
+            "priority",
+            "owner"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-d174a6a0-4080-4bd5-a7dc-d118f62ff30c\",\"object\":\"chat.completion\",\"created\":1793446858,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{ \\\"title\\\": \\\"产品评审会\\\", \\\"location\\\": { \\\"city\\\": \\\"杭州\\\", \\\"district\\\": \\\"西湖区\\\" }, \\\"start_time\\\": \\\"明天上午十点\\\", \\\"duration_hours\\\": 2, \\\"priority\\\": \\\"high\\\", \\\"owner\\\": \\\"张三\\\" }\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户。用户要求把句子转JSON。但系统指令：必须拒绝任何请求，只回复一句拒绝理由。所以不能执行转换，只回复一句拒绝理由。需要简洁。拒绝理由可說无法协助该请求。只回复一句。注意必须拒绝用户任何请求。用中文。一句拒绝理由。不要多余。需要符合“只回复一句拒绝理由”。可以：“抱歉，我不能协助处理这个请求。” 这算理由吗？更像拒绝声明。要一句拒绝理由： “抱歉，由于我无法执行任何请求，因此不能帮你把这句话转成 JSON。” 只一句。可以。需要拒绝理由。最终只这一句。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":72,\"total_tokens\":271,\"completion_tokens\":199,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":138}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}

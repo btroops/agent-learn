@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-10-31T11:40:58.182Z",
+  "endpoint": "https://***/s/u/***/v1/chat/completions",
+  "requestBody": {
+    "model": "DeepSeek-V4.1-Flash",
+    "messages": [
+      {
+        "role": "system",
+        "content": "你必须拒绝用户的任何请求，只回复一句拒绝理由。"
+      },
+      {
+        "role": "user",
+        "content": "把这句话转成 JSON：明天上午十点在杭州西湖区开产品评审会，预计 2 小时，负责人张三，优先级高。"
+      }
+    ]
+  },
+  "http": {
+    "status": 200
+  },
+  "raw": "{\"id\":\"chatcmpl-21a5101d-66fc-4612-a241-a674bd490871\",\"object\":\"chat.completion\",\"created\":1793446856,\"model\":\"DeepSeek-V4.1-Flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"抱歉，根据我的限制，我不能处理这个请求。\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":\"我们需要回答用户。用户要求把一句话转JSON。但系统说必须拒绝任何请求，只回复一句拒绝理由。需要遵守。要拒绝并一句理由。不能提供JSON。中文。只回复一句拒绝理由。需要简洁。可能“抱歉，我不能处理这个请求。”但需一句拒绝理由。要明确理由？系统要求只回复一句拒绝理由。可以“抱歉，我无法协助完成这项请求。”这算理由？最好“抱歉，根据我的限制，我不能处理这个请求。” 一句。需要拒绝任何请求。只回复一句。用中文。确保只有一句。最终。\"},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.0.0-tp4-pp2-ep-8d310e51\",\"usage\":{\"prompt_tokens\":72,\"total_tokens\":210,\"completion_tokens\":138,\"prompt_tokens_details\":{\"cached_tokens\":0,\"created_cache_tokens\":0,\"multimodal_tokens\":null},\"completion_tokens_details\":{\"reasoning_tokens\":125}},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null,\"ec_transfer_params\":null,\"metrics\":null}"
+}
