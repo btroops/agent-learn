@@ -675,3 +675,35 @@ S2 重复 3 次：`priority` 全部 `low`，`owner` 全部张三，`start_time` 
 
 - A 路径的 strict 不是开关（§13.1）；tools 才是 strict 控制（§11）。
 - `length` 与 refusal 两种破保证情形已实测（§13.2/13.3）；解析前必须检查 `finish_reason`，`refusal` 字段不可依赖。
+
+### 14. 2×2 对照：机器 schema vs 文字 schema（2026-10-31，20 次请求）
+
+样本 `samples/day5k/`。同一份 `HARD_SCHEMA`（嵌套 `address` 必填、6 值枚举不含 `high`、`minimum:100` 与原文"2 小时"冲突），四组各 5 次：
+
+| 组 | prompt | `response_format` | schema 通过 | prompt/completion | 耗时 |
+|---|---|---|---|---|---|
+| H1 机器 schema | 无文字 | `json_schema` | 5/5 | 75 / 180–224 | 1.7–3.0s |
+| H2 机器 + 文字 | 有文字 | `json_schema` | 5/5 | 194 / 624–1325 | 7.3–15.7s |
+| H3 文字 only | 有文字 | `json_object` | 5/5 | 194 / 561–1565 | 6.4–16.9s |
+| H4 无信息 | 无文字 | `json_object` | 0/5 | 75 / 195–265 | 1.9–2.5s |
+
+H2 vs H3 是同 prompt、同 token 的严格对照，唯一差异是 `response_format`。
+
+关键观察：
+
+1. **文字 schema 并非"做不对"**：H3 5/5 通过，模型主动选了 `duration_hours:100`、`priority:"unknown"`、`address:""` 这类最小合法值，说明它读了文字并遵守。连"hard" schema 都是 5/5，此前的 C2/A5b 结论在更难的 schema 上仍然成立。
+2. **grammar 的优势不是正确率，而是成本与保证**：H1 用 75 prompt token、1.7–3.0s；H3 用 194 prompt token、6.4–16.9s。两者都 5/5 结构合法。
+3. **失败形态不同**：H1 看不到 schema，靠 grammar 顶出合法值，`duration_hours` 出现 `2439 / 2211 / 202002`；H3 看得见文字，选边界值 `100 / unknown / 空串`。两种都"结构合法但语义不可用"，H3 更像占位符。
+4. **H2（两者都有）没有更好**：5/5，但值全部固定成 100/unknown/空串，成本最高（prompt 194，completion 624–1325，7–16s）。文字在主导取值，grammar 只保证结构，等于付两份钱。
+5. H4 0/5：没有 schema 信息时输出中文键，连字段名都猜不中。
+
+结论：
+
+- **"机器 schema 比文字 schema 更可靠"在本实验里不成立**；至少对 6 字段、文字描述精确的 schema，文字版 5/5 合法。
+- 机器 schema 的硬优势是**不带外 prompt token + 结构保证 + 延迟低**，不是"模型更听话"。
+- 但两者都逃不过"合法但语义错"：H1 的 202002 小时、H3 的空 `address` 都是 schema 合法、业务不可用。
+- 选型：纯抽取优先 A（成本与延迟）；文字 schema 适合降级/无 `json_schema` 的网关，但要接受 prompt 成本与"占位符"失败形态。
+
+限制：n=5、单一模型、schema 只有 6 字段且文字描述精确；字段更多/描述更模糊时文字版可能掉点。H2/H3 的 completion 波动大（561–1565），思考长度仍主导延迟。
+
+离线复验：`--revalidate=day5k` 旧口径（`EVENT_SCHEMA`）0/20，新口径（`intentSchema`）15/20，翻转 15 份——验证了 `intentSchema` 修正的必要性。

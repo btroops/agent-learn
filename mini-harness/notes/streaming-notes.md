@@ -263,7 +263,7 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 ### 5.3 选型规则（本项目采用）
 
 1. **有副作用的动作 → B**（`tools` + `tool_choice`）：需要 `id`、需要执行、需要 `role:"tool"` 回填，这些 `json_schema` 给不了。但必须显式开 `function.strict:true`，否则参数只是说明书（见 5.5）；开了之后与 A 一样受语法约束，仍要做业务校验。
-2. **纯数据抽取 → A**（`json_schema`）：强制力最强；带外 schema 不占 prompt token（外部资料显示 OpenAI 同样不计，不是本网关独有，见 devlog Day 5 §10.3）。
+2. **纯数据抽取 → A**（`json_schema`）：优势是带外 schema 不占 prompt token、延迟低、结构有保证；2×2 显示文字 schema 也能 5/5 合规，所以 A 的优势不是"更正确"，而是成本与保证（见 5.8）。
 3. **C 只作降级**：网关不支持 A/B 时用文字 schema + 客户端 `JSON.parse` + schema 校验，失败要重试，不能当成功。
 4. 无论哪条路径，**业务校验不能省**（见 5.1）。
 
@@ -309,3 +309,16 @@ Python 首版里 `stream_chat_completion` 把 `aiter_sse_events` 吐出的 `[DON
 
 - **`finish_reason:"length"`**：`max_tokens:8` 时 content 被截成 `{"title":"产品评审会","location`，JSON 不完整。解析前必须先看 `finish_reason`。
 - **refusal**：本网关不填 `refusal` 字段（恒 `null`）。无 schema 时拒答落在 content；**有 schema 时，grammar 会覆盖拒答意图**——system 强制拒答、reasoning 也计划拒答，最终仍输出完整的事件 JSON。用 `json_schema` 时不能把"结构化成功"当成"模型同意执行"。
+
+### 5.8 机器 schema vs 文字 schema：2×2 实测
+
+H2/H3 是同 prompt、同 194 prompt tokens，唯一差异是 `response_format`：
+
+| 组 | schema 通过 | completion | 耗时 |
+|---|---|---|---|
+| `json_schema`（机器，75 prompt tokens） | 5/5 | 180–224 | 1.7–3.0s |
+| `json_schema` + 文字 | 5/5 | 624–1325 | 7.3–15.7s |
+| `json_object` + 文字 | 5/5 | 561–1565 | 6.4–16.9s |
+| `json_object`（无信息） | 0/5 | 195–265 | 1.9–2.5s |
+
+结论：文字 schema 不是"做不对"，而是**贵**；机器 schema 的收益是零 prompt 成本 + 结构保证 + 低延迟，不是正确率。两者都会产出"合法但语义错"的值（grammar 组出现 `202002` 小时，文字组用空 `address` 占位）。详见 devlog §14。
